@@ -5,6 +5,9 @@ venv/
 __pycache__/
 *.pyc
 
+# Gradio local cache / analytics flag
+.gradio/
+
 # Large/regenerable data - can be rebuilt by running the scripts
 nist_data.json
 clean_rules.json

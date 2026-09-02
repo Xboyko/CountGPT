@@ -29,9 +29,11 @@ python setup_data.py
 ollama pull llama3.1:8b
 
 # 6. Run
-python chat_website.py          # Gradio UI
+python chat_website.py          # Gradio UI (chat + retrieval side panel + export)
 # or: python ask_chatbot.py     # CLI
 ```
+
+The Gradio UI shows retrieved control IDs/scores in a side panel, a persistent **draft / not assessor-validated** banner, and Markdown/CSV export of the last answer plus sources.
 
 Useful checks:
 
@@ -65,7 +67,7 @@ Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), custom NumPy
 
 ### 1. RAG pipeline
 
-I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. This is all wrapped in a working Gradio chat interface so it runs as a local web app.
+I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. The Gradio UI shows a persistent draft disclaimer, a sources side panel (control IDs, similarity scores, titles/text), and Markdown/CSV export of the last answer plus retrieved controls.
 
 ### 2. Fine tuning pipeline (QLoRA on Llama 3.1 8B)
 
