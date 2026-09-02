@@ -4,23 +4,72 @@ A locally run cybersecurity compliance assistant I'm building to learn the RMF/A
 
 **Note on how this was built:** I used AI to help me program and implement this project. My focus was on the compliance domain design (what the RAG dataset should contain, what the fine tuning examples needed to teach, how to structure POA\&M/SSP style outputs), debugging the pipeline when it broke, and checking whether the results actually made sense against real RMF/FedRAMP/DoD guidance. This project is mainly here to strengthen my knowledge in different areas of cybersecurity.
 
+## Quick start (reproducible setup)
+
+**Requirements:** Python 3.10–3.12, [Ollama](https://ollama.com), and enough disk for the MiniLM model + Llama 3.1 8B.
+
+```bash
+# 1. Clone and enter the repo
+cd CountGPT
+
+# 2. Create and activate a virtualenv
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux / WSL / macOS:
+source venv/bin/activate
+
+# 3. Install Python deps
+pip install -r requirements.txt
+
+# 4. Build local NIST 800-53 data (download → extract → embed)
+python setup_data.py
+
+# 5. Pull the chat model (once)
+ollama pull llama3.1:8b
+
+# 6. Run
+python chat_website.py          # Gradio UI
+# or: python ask_chatbot.py     # CLI
+```
+
+Useful checks:
+
+```bash
+python setup_data.py --check    # verify artifacts + Ollama on PATH
+python setup_data.py --force    # rebuild download/extract/embeddings
+python retrieve.py              # ID-matching self-check (no GPU needed)
+```
+
+Regenerable files (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.pkl`) are gitignored and created by `setup_data.py`.
+
+### Optional: QLoRA fine-tuning
+
+Needs a CUDA GPU. This path is separate from the Gradio app today.
+
+```bash
+pip install -r requirements-finetune.txt
+python finetune.py              # reads training_data.jsonl → countgpt_model/
+python test_finetuned.py        # smoke-test the adapter
+```
+
 ## Why I built this
 
 I wanted to get hands on with the kind of work an ISSO or compliance focused cybersecurity role actually involves, like reading and applying NIST 800-53 controls, drafting POA\&Ms, and writing SSP control implementation statements, instead of just reading about RMF in the abstract. Building a tool that has to retrieve and reason over real control text forced me to actually understand the material well enough to know when the output was right or wrong.
 
 ## Tech stack
 
-Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), a custom built vector search (ChromaDB style), Ollama running Llama 3.1 8B locally, Unsloth for QLoRA fine tuning, PyTorch (CUDA), Gradio for the chat interface, and WSL2 (Ubuntu on Windows).
+Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), custom NumPy cosine retrieval over a pickled index (hybrid exact control-ID + semantic search), Ollama running Llama 3.1 8B locally, Unsloth for QLoRA fine tuning, PyTorch (CUDA), Gradio for the chat interface, and WSL2 (Ubuntu on Windows).
 
 ## What's Built
 
-### 1\. RAG pipeline
+### 1. RAG pipeline
 
-I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches. Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. This is all wrapped in a working Gradio chat interface so it runs as a local web.
+I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. This is all wrapped in a working Gradio chat interface so it runs as a local web app.
 
-### 2\. Fine tuning pipeline (QLoRA on Llama 3.1 8B)
+### 2. Fine tuning pipeline (QLoRA on Llama 3.1 8B)
 
-I built a 25 example instruction tuning dataset, grounded in real, sourced public reference material, including:
+I built a 25 example instruction tuning dataset (`training_data.jsonl`), grounded in real, sourced public reference material, including:
 
 * FedRAMP's official POA\&M guidance (remediation timelines by severity, vendor dependency handling, false positive/risk adjustment documentation)
 * DoD RMF process specifics like eMASS as the system of record, ISSO/ISSM role distinctions, and ATO authorization rules
@@ -41,4 +90,3 @@ The fine tuned model also isn't wired into the Gradio front end yet, so right no
 ## The Vision
 
 I want to expand the fine tuning dataset toward 300+ examples to get better answers, get the fine tuned model actually wired into the Gradio front end, and possibly move this to a publicly hosted site down the line.
-

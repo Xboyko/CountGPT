@@ -1,0 +1,14 @@
+# Optional QLoRA fine-tuning (GPU + CUDA required).
+# Install on top of the core env only if you plan to run finetune.py:
+#   pip install -r requirements-finetune.txt
+#
+# Unsloth pins its own torch/transformers stack; follow
+# https://github.com/unslothai/unsloth if this conflicts with your CUDA version.
+
+-r requirements.txt
+unsloth
+trl
+transformers
+datasets
+peft
+accelerate

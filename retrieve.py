@@ -233,8 +233,8 @@ def format_matches(matches):
 
 def pkl_missing_message(path=PKL_PATH):
     return (
-        f"ERROR: {path} not found. Run extract_all_rules.py "
-        f"(needs nist_data.json) then build_embeddings.py first."
+        f"ERROR: {path} not found. From the project root run: "
+        f"python setup_data.py"
     )
 
 
