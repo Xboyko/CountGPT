@@ -1,0 +1,23 @@
+﻿# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Large/regenerable data - can be rebuilt by running the scripts
+nist_data.json
+clean_rules.json
+rules_with_embeddings.pkl
+
+# Fine-tuning outputs - model weights don't belong in Git
+countgpt_model/
+training_output/
+unsloth_compiled_cache/
+
+# Environment variables / secrets
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db
