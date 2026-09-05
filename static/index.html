@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CountGPT</title>
+    <meta
+      name="description"
+      content="Local NIST SP 800-53 assistant for control lookup and POA&amp;M drafting."
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="28" height="28">
+              <rect x="3" y="4" width="26" height="24" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10 12h12M10 16.5h8M10 21h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div>
+            <h1>CountGPT</h1>
+            <p class="subtitle">Local NIST SP 800-53 lookup and POA&amp;M drafting</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+          <button type="button" id="btn-sources" class="btn ghost sources-toggle">Sources</button>
+          <button type="button" id="btn-new" class="btn ghost">New chat</button>
+          <button type="button" id="btn-export-md" class="btn ghost" disabled>Export MD</button>
+          <button type="button" id="btn-export-csv" class="btn ghost" disabled>Export CSV</button>
+        </div>
+      </header>
+
+      <div class="disclaimer" role="note">
+        <strong>Draft / not assessor-validated.</strong>
+        For learning and analyst assistance only — not an ATO or eMASS artifact.
+        Have a qualified assessor review before use.
+      </div>
+
+      <div class="workspace">
+        <main class="chat-pane">
+          <div id="messages" class="messages" aria-live="polite"></div>
+
+          <form id="composer" class="composer">
+            <label class="sr-only" for="input">Message</label>
+            <textarea
+              id="input"
+              rows="1"
+              placeholder="Ask about a control (e.g. What does AC-2 require?) or draft a POA&amp;M…"
+              autocomplete="off"
+            ></textarea>
+            <button type="submit" id="btn-send" class="btn primary">Send</button>
+          </form>
+        </main>
+
+        <aside id="sources-panel" class="sources-pane" aria-label="Retrieved controls">
+          <div class="sources-head">
+            <h2>Sources</h2>
+            <span id="sources-mode" class="mode-tag hidden"></span>
+            <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">×</button>
+          </div>
+          <p id="sources-empty" class="sources-empty">
+            No retrieval yet. Ask a question or name a control ID (for example
+            <code>AC-2</code>).
+          </p>
+          <div id="sources-list" class="sources-list" hidden></div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="sources-backdrop" class="backdrop" hidden></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

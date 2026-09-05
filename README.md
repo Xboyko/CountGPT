@@ -28,12 +28,37 @@ python setup_data.py
 # 5. Pull the chat model (once)
 ollama pull llama3.1:8b
 
-# 6. Run
-python chat_website.py          # Gradio UI (chat + retrieval side panel + export)
-# or: python ask_chatbot.py     # CLI
+# 6. Run the HTML chat UI
+uvicorn app:app --reload --host 0.0.0.0 --port 7860
+# or: python app.py
+# or: python chat_website.py
+
+# Optional: legacy Gradio UI
+# python chat_gradio.py
+
+# Optional: one-shot CLI
+# python ask_chatbot.py
 ```
 
-The Gradio UI shows retrieved control IDs/scores in a side panel, a persistent **draft / not assessor-validated** banner, and Markdown/CSV export of the last answer plus sources.
+Open [http://127.0.0.1:7860](http://127.0.0.1:7860). The site is a ChatGPT-style page: chat transcript, retrieved NIST control sources (desktop sidebar, collapsible on mobile), a persistent **draft / not assessor-validated** banner, and Markdown/CSV export of the last answer plus sources.
+
+### Ollama host (WSL / remote)
+
+The app talks to Ollama at `OLLAMA_HOST` (default `http://127.0.0.1:11434`). If you run CountGPT in WSL and Ollama on Windows, point it at the Windows host IP:
+
+```bash
+# In WSL, the Windows host is often in /etc/resolv.conf
+export OLLAMA_HOST=http://$(grep -m1 nameserver /etc/resolv.conf | awk '{print $2}'):11434
+uvicorn app:app --reload --host 0.0.0.0 --port 7860
+```
+
+On the Windows side, Ollama must listen beyond localhost (for example set `OLLAMA_HOST=0.0.0.0` in the Windows environment, then restart Ollama). `GET /api/health` reports whether the store loaded and whether Ollama is reachable.
+
+`COUNTGPT_DRY_RUN=1` skips the model call and returns a short answer from retrieved controls — useful for UI checks when Llama is not pulled yet.
+
+### Future domain / reverse proxy
+
+The HTML UI is static files plus `/api/*`. Putting `uvicorn` (or gunicorn + uvicorn workers) behind Caddy/nginx on a domain is enough; no separate frontend build. Auth is not included yet.
 
 Useful checks:
 
@@ -41,13 +66,14 @@ Useful checks:
 python setup_data.py --check    # verify artifacts + Ollama on PATH
 python setup_data.py --force    # rebuild download/extract/embeddings
 python retrieve.py              # ID-matching self-check (no GPU needed)
+python -m unittest test_countgpt.py test_app.py
 ```
 
 Regenerable files (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.pkl`) are gitignored and created by `setup_data.py`.
 
 ### Optional: QLoRA fine-tuning
 
-Needs a CUDA GPU. This path is separate from the Gradio app today.
+Needs a CUDA GPU. This path is separate from the chat UI today.
 
 ```bash
 pip install -r requirements-finetune.txt
@@ -61,13 +87,13 @@ I wanted to get hands on with the kind of work an ISSO or compliance focused cyb
 
 ## Tech stack
 
-Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), custom NumPy cosine retrieval over a pickled index (hybrid exact control-ID + semantic search), Ollama running Llama 3.1 8B locally, Unsloth for QLoRA fine tuning, PyTorch (CUDA), Gradio for the chat interface, and WSL2 (Ubuntu on Windows).
+Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), custom NumPy cosine retrieval over a pickled index (hybrid exact control-ID + semantic search), Ollama running Llama 3.1 8B locally, FastAPI + a vanilla HTML/CSS/JS chat UI (Gradio kept as an optional legacy UI), Unsloth for QLoRA fine tuning, PyTorch (CUDA), and WSL2 (Ubuntu on Windows).
 
 ## What's Built
 
 ### 1. RAG pipeline
 
-I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. The Gradio UI shows a persistent draft disclaimer, a sources side panel (control IDs, similarity scores, titles/text), and Markdown/CSV export of the last answer plus retrieved controls.
+I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. The HTML UI shows a persistent draft disclaimer, a sources side panel (control IDs, similarity scores, titles/text), and Markdown/CSV export of the last answer plus retrieved controls.
 
 ### 2. Fine tuning pipeline (QLoRA on Llama 3.1 8B)
 
@@ -87,8 +113,8 @@ While building the parser, I ran into an issue where it only captured 324 of the
 
 25 training examples isn't really enough to reliably shift the model's behavior. My test output showed a reasonable POA\&M structure but it didn't consistently pick up the trained in specifics, like exact timelines or eMASS terminology. I think this is expected and not really a failure, it probably needs 300+ examples to have a meaningful effect and be a strong candidate.
 
-The fine tuned model also isn't wired into the Gradio front end yet, so right now it's only running on the base Llama 3.1 model through RAG. And the data source is still limited to the public NIST 800-53 controls.
+The fine tuned model also isn't wired into the chat UI yet, so right now it's only running on the base Llama 3.1 model through RAG. And the data source is still limited to the public NIST 800-53 controls.
 
 ## The Vision
 
-I want to expand the fine tuning dataset toward 300+ examples to get better answers, get the fine tuned model actually wired into the Gradio front end, and possibly move this to a publicly hosted site down the line.
+I want to expand the fine tuning dataset toward 300+ examples to get better answers, get the fine tuned model actually wired into the chat UI, and possibly move this to a publicly hosted site down the line (static UI + `/api` behind a reverse proxy).

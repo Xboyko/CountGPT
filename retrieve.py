@@ -6,10 +6,18 @@ import re
 
 import numpy as np
 
-PKL_PATH = "rules_with_embeddings.pkl"
+DEFAULT_PKL_PATH = "rules_with_embeddings.pkl"
 DEFAULT_K = 4
 DEFAULT_MIN_SCORE = 0.35
 EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
+
+
+def pkl_path() -> str:
+    return os.environ.get("COUNTGPT_PKL_PATH", DEFAULT_PKL_PATH)
+
+
+# Back-compat alias; prefer pkl_path() so COUNTGPT_PKL_PATH is read at call time.
+PKL_PATH = DEFAULT_PKL_PATH
 
 NIST_FAMILIES = {
     "ac", "at", "au", "ca", "cm", "cp", "ia", "ir", "ma", "mp",
@@ -99,9 +107,11 @@ def cosine_scores(query_vec, embeddings):
     return (E @ q) / (En * qn)
 
 
-def load_store(path=PKL_PATH):
+def load_store(path=None):
     global _store
-    if _store is not None and path == PKL_PATH:
+    path = path or pkl_path()
+    default_path = pkl_path()
+    if _store is not None and path == default_path:
         return _store
     if not os.path.exists(path):
         raise FileNotFoundError(path)
@@ -120,7 +130,7 @@ def load_store(path=PKL_PATH):
         "index_by_id": index_by_id,
         "path": path,
     }
-    if path == PKL_PATH:
+    if path == default_path:
         _store = store
     return store
 
@@ -231,7 +241,8 @@ def format_matches(matches):
     return "\n\n".join(parts)
 
 
-def pkl_missing_message(path=PKL_PATH):
+def pkl_missing_message(path=None):
+    path = path or pkl_path()
     return (
         f"ERROR: {path} not found. From the project root run: "
         f"python setup_data.py"
