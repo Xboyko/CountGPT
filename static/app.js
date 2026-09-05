@@ -266,8 +266,10 @@
       const ollamaOk = Boolean(data.ollama && data.ollama.reachable);
       if (data.ok) {
         els.health.className = "pill pill-ok";
-        els.health.textContent = "Ready";
-        els.health.title = `${data.model} · store loaded · Ollama reachable`;
+        els.health.textContent = data.dry_run ? "Ready (dry-run)" : "Ready";
+        els.health.title = data.dry_run
+          ? `${data.model} · store loaded · dry-run (Ollama skipped)`
+          : `${data.model} · store loaded · Ollama reachable`;
       } else if (storeOk && !ollamaOk) {
         els.health.className = "pill pill-warn";
         els.health.textContent = "Ollama offline";

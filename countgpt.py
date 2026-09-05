@@ -486,11 +486,13 @@ def check_ollama(timeout: float = 2.0) -> dict[str, Any]:
 def health_status() -> dict[str, Any]:
     ollama_info = check_ollama()
     store_loaded = bool(STORE_OK)
-    ok = store_loaded and bool(ollama_info.get("reachable"))
+    dry = dry_run_enabled()
+    ok = store_loaded and (bool(ollama_info.get("reachable")) or dry)
     return {
         "ok": ok,
         "store_loaded": store_loaded,
         "store_error": None if store_loaded else STORE_ERROR or retrieve.pkl_missing_message(),
         "ollama": ollama_info,
+        "dry_run": dry,
         "model": OLLAMA_MODEL,
     }

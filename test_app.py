@@ -38,6 +38,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("ok", data)
         self.assertIn("store_loaded", data)
         self.assertIn("ollama", data)
+        self.assertIn("dry_run", data)
         self.assertEqual(data["model"], "llama3.1:8b")
         self.assertIn("host", data["ollama"])
 
