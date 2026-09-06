@@ -43,6 +43,10 @@
       "try_in_chat": "What does AC-2 require?"
     },
     {
+      "id": "practice-scenarios",
+      "title": "Practice scenarios"
+    },
+    {
       "id": "glossary",
       "title": "Glossary"
     }

@@ -350,11 +350,89 @@ class AppApiTests(unittest.TestCase):
             "severity-timelines",
             "acas-vs-stig",
             "how-countgpt-answers",
+            "practice-scenarios",
             "glossary",
         ):
             self.assertIn(expected, ids)
         ssp_chapter = next(c for c in data["chapters"] if c["id"] == "ssp-vs-poam")
         self.assertIn("SSP vs POA&M", ssp_chapter["try_in_chat"])
+
+    def test_field_help_has_required_keys(self):
+        res = self.client.get("/api/field-help")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        poam_keys = set(data["poam"])
+        ssp_keys = set(data["ssp"])
+        required_poam = {
+            "severity",
+            "finding",
+            "system_name",
+            "poc",
+            "detector_source",
+            "discovery_date",
+            "control_id",
+            "vendor_dependency",
+            "status",
+        }
+        required_ssp = {"control_id", "system_context"}
+        self.assertTrue(required_poam.issubset(poam_keys), f"missing {required_poam - poam_keys}")
+        self.assertTrue(required_ssp.issubset(ssp_keys), f"missing {required_ssp - ssp_keys}")
+        for group in (data["poam"], data["ssp"]):
+            for key, tip in group.items():
+                sentences = [part for part in tip["body"].replace("?", ".").split(".") if part.strip()]
+                self.assertGreaterEqual(len(sentences), 2, key)
+                self.assertLessEqual(len(sentences), 4, key)
+                self.assertIn("title", tip)
+
+    def test_scenarios_api_and_static_shape(self):
+        res = self.client.get("/api/scenarios")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get("fictional"))
+        items = data["scenarios"]
+        self.assertGreaterEqual(len(items), 6)
+        self.assertLessEqual(len(items), 10)
+        slugs = {item["slug"] for item in items}
+        self.assertIn("acas-high-weak-cipher", slugs)
+        self.assertTrue(any(item["mode"] == "poam" for item in items))
+        self.assertTrue(any(item["mode"] == "ssp" for item in items))
+        for item in items:
+            self.assertIn(item["difficulty"], {"intro", "intermediate"})
+            self.assertIn(item["mode"], {"poam", "ssp"})
+            self.assertTrue(item["title"])
+            self.assertTrue(item["learning_goal"])
+            self.assertIsInstance(item["fields"], dict)
+            self.assertGreaterEqual(len(item["what_good_looks_like"]), 3)
+        one = self.client.get("/api/scenarios/acas-high-weak-cipher")
+        self.assertEqual(one.status_code, 200)
+        self.assertEqual(one.json()["mode"], "poam")
+        self.assertEqual(one.json()["fields"]["severity"], "High")
+        missing = self.client.get("/api/scenarios/not-a-real-slug")
+        self.assertEqual(missing.status_code, 404)
+
+    def test_workbench_documents_scenario_query_param(self):
+        html = self.client.get("/workbench")
+        self.assertEqual(html.status_code, 200)
+        self.assertIn("scenario-select", html.text)
+        self.assertIn('data-help="poam.severity"', html.text)
+        self.assertIn("Why this field?", html.text)
+        self.assertIn("Practice / fictional", html.text)
+        js = self.client.get("/static/workbench.js")
+        self.assertEqual(js.status_code, 200)
+        # /workbench?scenario=<slug> prefills the form and does not auto-generate.
+        self.assertIn('params.get("scenario")', js.text)
+        self.assertIn("/api/scenarios", js.text)
+        self.assertIn("/api/field-help", js.text)
+
+    def test_guide_lists_practice_scenarios(self):
+        res = self.client.get("/guide")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("practice-scenarios", res.text)
+        self.assertIn("Practice / fictional", res.text)
+        self.assertIn("/workbench?scenario=", res.text)
+        js = self.client.get("/static/guide.js")
+        self.assertEqual(js.status_code, 200)
+        self.assertIn("/api/scenarios", js.text)
 
 
 if __name__ == "__main__":

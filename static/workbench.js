@@ -54,6 +54,28 @@
     },
   };
 
+  const POAM_FIELDS = {
+    finding: "poam-finding",
+    severity: "poam-severity",
+    system_name: "poam-system",
+    poc: "poam-poc",
+    detector_source: "poam-detector",
+    plugin_id: "poam-plugin",
+    discovery_date: "poam-date",
+    control_id: "poam-control",
+    vendor_dependency: "poam-vendor",
+    vendor_notes: "poam-vendor-notes",
+    status: "poam-status",
+    guidance: "poam-guidance",
+  };
+
+  const SSP_FIELDS = {
+    control_id: "ssp-control",
+    system_name: "ssp-system",
+    system_context: "ssp-context",
+    guidance: "ssp-guidance",
+  };
+
   const els = {
     health: document.getElementById("health-pill"),
     exportMd: document.getElementById("btn-export-md"),
@@ -70,12 +92,22 @@
     draftMeta: document.getElementById("draft-meta"),
     generatePoam: document.getElementById("btn-generate-poam"),
     generateSsp: document.getElementById("btn-generate-ssp"),
+    scenarioSelect: document.getElementById("scenario-select"),
+    scenarioBanner: document.getElementById("scenario-banner"),
+    scenarioTitle: document.getElementById("scenario-title"),
+    scenarioGoal: document.getElementById("scenario-goal"),
+    scenarioLinks: document.getElementById("scenario-links"),
+    goodLooks: document.getElementById("good-looks"),
+    goodLooksList: document.getElementById("good-looks-list"),
   };
 
   const state = {
     mode: "poam",
     last: null,
     busy: false,
+    fieldHelp: { poam: {}, ssp: {} },
+    scenarios: [],
+    scenario: null,
   };
 
   function renderMarkdown(text) {
@@ -157,6 +189,181 @@
   function showError(message) {
     showDraft(`I could not complete that draft.\n\n${message}`, { mode: state.mode });
     els.draftOutput.querySelector(".md")?.classList.add("error");
+    hideGoodLooks();
+  }
+
+  function helpEntry(key) {
+    const [mode, field] = String(key || "").split(".");
+    const group = state.fieldHelp[mode] || {};
+    return group[field] || null;
+  }
+
+  function closeAllHelp(exceptBtn) {
+    document.querySelectorAll(".field-help-pop").forEach((pop) => pop.remove());
+    document.querySelectorAll(".field-help-btn[aria-expanded='true']").forEach((btn) => {
+      if (btn !== exceptBtn) btn.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  function toggleHelp(btn) {
+    const open = btn.getAttribute("aria-expanded") === "true";
+    closeAllHelp(btn);
+    if (open) {
+      btn.setAttribute("aria-expanded", "false");
+      return;
+    }
+    const tip = helpEntry(btn.getAttribute("data-help"));
+    if (!tip) return;
+    const pop = document.createElement("div");
+    pop.className = "field-help-pop";
+    pop.setAttribute("role", "note");
+    const links = [];
+    if (tip.guide) {
+      links.push(`<a href="${escapeHtml(tip.guide)}">Read more in the Guide</a>`);
+    }
+    if (tip.glossary) {
+      links.push(
+        `<a href="/guide#term-${encodeURIComponent(tip.glossary)}">${escapeHtml(tip.glossary.replaceAll("-", " "))}</a>`
+      );
+    }
+    pop.innerHTML = `
+      <p><strong>${escapeHtml(tip.title || "Why this field?")}</strong></p>
+      <p>${escapeHtml(tip.body || "")}</p>
+      ${links.length ? `<p class="field-help-links">${links.join(" · ")}</p>` : ""}
+    `;
+    const field = btn.closest(".field");
+    const label = field?.querySelector(".field-label");
+    (label || btn).insertAdjacentElement("afterend", pop);
+    btn.setAttribute("aria-expanded", "true");
+  }
+
+  function hideGoodLooks() {
+    if (!els.goodLooks) return;
+    els.goodLooks.classList.add("hidden");
+    els.goodLooks.open = false;
+    els.goodLooksList?.replaceChildren();
+  }
+
+  function showGoodLooks(items) {
+    if (!els.goodLooks || !els.goodLooksList) return;
+    const list = Array.isArray(items) ? items.filter(Boolean) : [];
+    if (!list.length) {
+      hideGoodLooks();
+      return;
+    }
+    els.goodLooksList.replaceChildren();
+    for (const item of list) {
+      const li = document.createElement("li");
+      const label = document.createElement("label");
+      label.className = "good-looks-item";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      const span = document.createElement("span");
+      span.textContent = item;
+      label.append(box, span);
+      li.appendChild(label);
+      els.goodLooksList.appendChild(li);
+    }
+    els.goodLooks.classList.remove("hidden");
+    els.goodLooks.open = true;
+  }
+
+  function syncScenarioUrl(slug) {
+    const url = new URL(window.location.href);
+    if (slug) url.searchParams.set("scenario", slug);
+    else url.searchParams.delete("scenario");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function fillFields(map, values) {
+    const data = values || {};
+    for (const [key, id] of Object.entries(map)) {
+      const node = document.getElementById(id);
+      if (!node) continue;
+      node.value = data[key] != null ? String(data[key]) : "";
+    }
+  }
+
+  function renderScenarioBanner(scenario) {
+    if (!els.scenarioBanner) return;
+    if (!scenario) {
+      els.scenarioBanner.classList.add("hidden");
+      if (els.scenarioTitle) els.scenarioTitle.textContent = "";
+      if (els.scenarioGoal) els.scenarioGoal.textContent = "";
+      els.scenarioLinks?.replaceChildren();
+      return;
+    }
+    els.scenarioBanner.classList.remove("hidden");
+    if (els.scenarioTitle) {
+      els.scenarioTitle.textContent = `${scenario.title} · ${scenario.difficulty || "intro"} · ${String(scenario.mode || "").toUpperCase()}`;
+    }
+    if (els.scenarioGoal) {
+      els.scenarioGoal.textContent = scenario.learning_goal || "";
+    }
+    if (els.scenarioLinks) {
+      els.scenarioLinks.replaceChildren();
+      if (scenario.guide) {
+        const guide = document.createElement("a");
+        guide.href = scenario.guide;
+        guide.textContent = "Guide chapter";
+        els.scenarioLinks.appendChild(guide);
+      }
+      if (scenario.chat_question) {
+        const chat = document.createElement("a");
+        chat.href = `/?q=${encodeURIComponent(scenario.chat_question)}`;
+        chat.textContent = "Ask in Chat";
+        els.scenarioLinks.appendChild(chat);
+      }
+    }
+  }
+
+  function applyScenario(slug, options) {
+    const opts = options || {};
+    if (!slug) {
+      state.scenario = null;
+      renderScenarioBanner(null);
+      hideGoodLooks();
+      if (!opts.keepUrl) syncScenarioUrl("");
+      if (els.scenarioSelect) els.scenarioSelect.value = "";
+      return;
+    }
+    const scenario = state.scenarios.find((item) => item.slug === slug);
+    if (!scenario) return;
+    state.scenario = scenario;
+    setMode(scenario.mode);
+    if (scenario.mode === "ssp") {
+      fillFields(SSP_FIELDS, scenario.fields || {});
+    } else {
+      fillFields(POAM_FIELDS, scenario.fields || {});
+    }
+    renderScenarioBanner(scenario);
+    hideGoodLooks();
+    if (els.draftEmpty) els.draftEmpty.classList.remove("hidden");
+    if (els.draftOutput) els.draftOutput.classList.add("hidden");
+    if (els.draftMeta) els.draftMeta.classList.add("hidden");
+    state.last = null;
+    setExportEnabled(false);
+    if (els.scenarioSelect) els.scenarioSelect.value = slug;
+    if (!opts.keepUrl) syncScenarioUrl(slug);
+  }
+
+  function populateScenarioSelect() {
+    if (!els.scenarioSelect) return;
+    const current = els.scenarioSelect.value;
+    els.scenarioSelect.replaceChildren();
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "Choose a practice scenario…";
+    els.scenarioSelect.appendChild(blank);
+    for (const item of state.scenarios) {
+      const opt = document.createElement("option");
+      opt.value = item.slug;
+      const mode = item.mode === "ssp" ? "SSP" : "POA&M";
+      const level = item.difficulty === "intermediate" ? "Intermediate" : "Intro";
+      opt.textContent = `${item.title} · ${level} · ${mode}`;
+      els.scenarioSelect.appendChild(opt);
+    }
+    if (current) els.scenarioSelect.value = current;
   }
 
   function applyPreset(name) {
@@ -186,6 +393,7 @@
 
   function setMode(mode) {
     state.mode = mode === "ssp" ? "ssp" : "poam";
+    closeAllHelp();
     document.querySelectorAll(".mode-tabs .tab").forEach((tab) => {
       const active = tab.dataset.mode === state.mode;
       tab.classList.toggle("active", active);
@@ -234,6 +442,7 @@
     }
 
     setBusy(true);
+    hideGoodLooks();
     showDraft("_Generating draft…_", { mode });
     els.draftOutput.querySelector(".md")?.classList.remove("error");
 
@@ -260,6 +469,11 @@
       showDraft(data.draft || "", data.meta);
       renderSources(data.matches, mode);
       setExportEnabled(Boolean((data.draft || "").trim()));
+      if (state.scenario && state.scenario.mode === mode) {
+        showGoodLooks(state.scenario.what_good_looks_like);
+      } else {
+        hideGoodLooks();
+      }
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
       showError(msg);
@@ -337,6 +551,37 @@
     }
   }
 
+  async function loadFieldHelp() {
+    try {
+      const res = await fetch("/api/field-help");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "field help failed");
+      state.fieldHelp = {
+        poam: data.poam || {},
+        ssp: data.ssp || {},
+      };
+    } catch {
+      state.fieldHelp = { poam: {}, ssp: {} };
+    }
+  }
+
+  async function loadScenarios() {
+    try {
+      const res = await fetch("/api/scenarios");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "scenarios failed");
+      state.scenarios = Array.isArray(data.scenarios) ? data.scenarios : [];
+    } catch {
+      state.scenarios = [];
+    }
+    populateScenarioSelect();
+    // Query param: /workbench?scenario=<slug> loads a practice scenario
+    // from GET /api/scenarios and prefills the form. It does not auto-generate.
+    const params = new URLSearchParams(window.location.search);
+    const slug = (params.get("scenario") || "").trim();
+    if (slug) applyScenario(slug, { keepUrl: true });
+  }
+
   document.querySelectorAll(".mode-tabs .tab").forEach((tab) => {
     tab.addEventListener("click", () => setMode(tab.dataset.mode));
   });
@@ -357,6 +602,31 @@
     event.preventDefault();
     generate("ssp");
   });
+  els.formPoam.addEventListener("reset", () => {
+    queueMicrotask(() => applyScenario(""));
+  });
+  els.formSsp.addEventListener("reset", () => {
+    queueMicrotask(() => applyScenario(""));
+  });
+
+  document.querySelectorAll(".field-help-btn").forEach((btn) => {
+    btn.addEventListener("mousedown", (event) => event.preventDefault());
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleHelp(btn);
+    });
+  });
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".field-help-btn") || event.target.closest(".field-help-pop")) {
+      return;
+    }
+    closeAllHelp();
+  });
+
+  els.scenarioSelect?.addEventListener("change", () => {
+    applyScenario(els.scenarioSelect.value);
+  });
 
   els.exportMd.addEventListener("click", () => exportTurn("md"));
   els.exportCsv.addEventListener("click", () => exportTurn("csv"));
@@ -366,5 +636,7 @@
   });
   els.sourcesBackdrop.addEventListener("click", () => toggleSources(false));
 
+  loadFieldHelp();
+  loadScenarios();
   refreshHealth();
 })();

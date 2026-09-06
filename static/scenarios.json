@@ -1,0 +1,238 @@
+{
+  "fictional": true,
+  "disclaimer": "Practice / fictional — these are made-up systems for learning, not real networks or findings.",
+  "scenarios": [
+    {
+      "slug": "acas-high-weak-cipher",
+      "title": "ACAS High: weak cipher on a public web server",
+      "difficulty": "intro",
+      "mode": "poam",
+      "learning_goal": "Practice a High scan finding with a 30-day clock and a clear planned fix — without inventing a plugin ID.",
+      "guide": "/guide#severity-timelines",
+      "chat_question": "What are common High Moderate Low fix timelines?",
+      "fields": {
+        "finding": "HarborDesk’s public web server still allows a weak TLS cipher suite. The ACAS/Nessus scan reported it on the internet-facing login page. HarborDesk is a fictional citizen portal used only for practice.",
+        "severity": "High",
+        "status": "Open",
+        "system_name": "HarborDesk",
+        "poc": "Jordan Hale, ISSO",
+        "detector_source": "ACAS/Nessus",
+        "plugin_id": "",
+        "discovery_date": "2026-08-15",
+        "control_id": "SC-8",
+        "vendor_dependency": "no",
+        "vendor_notes": "",
+        "guidance": "High-severity practice item. Plan to disable the weak ciphers, require a modern TLS baseline, and confirm with a follow-up scan. Do not invent a plugin ID or extra product names."
+      },
+      "what_good_looks_like": [
+        "The draft stays labeled as a draft, not an official record.",
+        "HarborDesk (or a clear placeholder) is named; no real agency system is invented.",
+        "Severity is High and the usual 30-day clock is tied to 15 August 2026, not “today.”",
+        "The planned fix is concrete: turn off weak ciphers / require modern TLS, then rescan.",
+        "No plugin ID, CVE, or tool name appears that was not on the form.",
+        "Status stays Open until the follow-up scan is done."
+      ]
+    },
+    {
+      "slug": "moderate-vendor-patch",
+      "title": "Moderate: missing patch with a vendor wait",
+      "difficulty": "intro",
+      "mode": "poam",
+      "learning_goal": "Show how a Moderate item stays open when you are waiting on a vendor patch.",
+      "guide": "/guide#severity-timelines",
+      "chat_question": "What is a vendor dependency on a POA&M?",
+      "fields": {
+        "finding": "LedgerNest, a fictional internal reporting app, is running an outdated application library. The vendor has not released a patched build yet. This is practice data only.",
+        "severity": "Moderate",
+        "status": "Open",
+        "system_name": "LedgerNest",
+        "poc": "Riley Chen, ISSO",
+        "detector_source": "ACAS/Nessus",
+        "plugin_id": "",
+        "discovery_date": "2026-07-10",
+        "control_id": "SI-2",
+        "vendor_dependency": "yes",
+        "vendor_notes": "Vendor ticket VD-1841; patched build expected in about six weeks.",
+        "guidance": "Moderate timeline is commonly 90 days from discovery. Keep the item Open. Record the vendor ticket and expected build. Do not close it because the wait is inconvenient, and do not invent a plugin ID."
+      },
+      "what_good_looks_like": [
+        "Vendor dependency is clearly Yes, with ticket VD-1841 or a placeholder — not a made-up CVE.",
+        "The item stays Open (or Delayed), not Closed.",
+        "The 90-day Moderate clock is mentioned from 10 July 2026.",
+        "The write-up explains you cannot finish the fix until the vendor build arrives.",
+        "No plugin ID is invented.",
+        "A next check-in or milestone is named, even if the patch date is still an estimate."
+      ]
+    },
+    {
+      "slug": "false-positive-missing-service",
+      "title": "False positive: scanner flagged a service that is not installed",
+      "difficulty": "intro",
+      "mode": "poam",
+      "learning_goal": "Document why a scan hit is not a real weakness, without closing the item before the evidence is written down.",
+      "guide": "/guide#acas-vs-stig",
+      "chat_question": "What is a false positive on a vulnerability scan?",
+      "fields": {
+        "finding": "An ACAS/Nessus scan reported an outdated FTP service on FileRelay-Lab. Host review shows FTP is not installed; only SFTP is in use. FileRelay-Lab is a fictional lab host for practice.",
+        "severity": "Moderate",
+        "status": "Pending",
+        "system_name": "FileRelay-Lab",
+        "poc": "Sam Okonkwo, ISSO",
+        "detector_source": "ACAS/Nessus",
+        "plugin_id": "",
+        "discovery_date": "2026-09-02",
+        "control_id": "CM-7",
+        "vendor_dependency": "no",
+        "vendor_notes": "",
+        "guidance": "Treat this as a False Positive starter, not a confirmed open hole. State what the scanner reported, what the host review showed (FTP not installed), and keep validation Pending. Do not invent a plugin ID or mark Closed with no evidence."
+      },
+      "what_good_looks_like": [
+        "The write-up repeats what the scanner claimed and what the host review found.",
+        "It says FTP is not installed and SFTP is what is actually used.",
+        "Status is Pending or False Positive — not Closed with no evidence.",
+        "No plugin ID or extra host names are invented.",
+        "A reviewer can see what proof to attach (package list, service list, or screenshot).",
+        "The tone is investigative, not “this scan is junk so ignore it.”"
+      ]
+    },
+    {
+      "slug": "risk-adjustment-compensating",
+      "title": "Risk adjustment: leftover weakness with extra protections",
+      "difficulty": "intermediate",
+      "mode": "poam",
+      "learning_goal": "Practice describing leftover risk and the extra protections already in place, without pretending the weakness is gone.",
+      "guide": "/guide#ssp-vs-poam",
+      "chat_question": "What is residual risk and a compensating control?",
+      "fields": {
+        "finding": "Watchpost’s leftover admin web page cannot use modern TLS yet. Access is limited to a jump host, multi-factor sign-in, and a small named admin group. Watchpost is a fictional admin path used only for practice.",
+        "severity": "Moderate",
+        "status": "Pending",
+        "system_name": "Watchpost",
+        "poc": "Avery Kim, ISSO",
+        "detector_source": "Manual review",
+        "plugin_id": "",
+        "discovery_date": "2026-06-20",
+        "control_id": "SC-8",
+        "vendor_dependency": "yes",
+        "vendor_notes": "Vendor says TLS upgrade lands in the next major release; no date on the calendar yet.",
+        "guidance": "Risk Adjustment starter. The weakness is still real. Name the extra protections (jump host, MFA, named admin group) and the leftover risk. Keep status Pending until a person with authority accepts it. Do not invent a close date or claim the page is safe."
+      },
+      "what_good_looks_like": [
+        "The leftover weakness is still named (old TLS on the admin page).",
+        "Extra protections are listed: jump host, MFA, small named admin group.",
+        "The draft does not claim the problem is fully fixed.",
+        "Status is Pending or Risk Accepted — not Closed as if the hole is gone.",
+        "Vendor wait is mentioned without a made-up ship date.",
+        "Leftover risk is written in plain English a decision-maker could accept or reject."
+      ]
+    },
+    {
+      "slug": "ssp-ia2-mfa",
+      "title": "SSP: draft an IA-2 multi-factor sign-in statement",
+      "difficulty": "intro",
+      "mode": "ssp",
+      "learning_goal": "Write an assessor-testable “how we do multi-factor login” paragraph without inventing tools you did not name.",
+      "guide": "/guide#ssp-vs-poam",
+      "chat_question": "What does IA-2 require?",
+      "fields": {
+        "control_id": "IA-2",
+        "system_name": "HarborDesk",
+        "system_context": "HarborDesk is a fictional citizen web portal used for practice. Staff and administrators sign in with multi-factor authentication through the agency identity service. Public users have a separate account path that does not use privileged roles. Name the identity product only if known; otherwise keep [identity provider].",
+        "guidance": "Make the statement testable: who must use MFA, how a reviewer would see it, privileged vs standard users, and any temporary exception as a placeholder if unknown. Do not invent a product name."
+      },
+      "what_good_looks_like": [
+        "The paragraph is about IA-2, not a mix of unrelated rules.",
+        "It says who must use multi-factor sign-in (staff and admins).",
+        "Unnamed tools stay as [identity provider] or similar — no surprise product names.",
+        "A reviewer could test it (see the MFA prompt, check a sample account).",
+        "Privileged access is called out separately from public users.",
+        "It reads like “how HarborDesk does this,” not a copy of the catalog text."
+      ]
+    },
+    {
+      "slug": "ssp-au2-logging",
+      "title": "SSP: draft an AU-2 event logging statement",
+      "difficulty": "intro",
+      "mode": "ssp",
+      "learning_goal": "Name which events are logged, who reviews them, and how long they are kept — or use placeholders when you do not know.",
+      "guide": "/guide#ssp-vs-poam",
+      "chat_question": "What does AU-2 require?",
+      "fields": {
+        "control_id": "AU-2",
+        "system_name": "HarborDesk",
+        "system_context": "HarborDesk is a fictional citizen portal for practice. Application and sign-in events are sent to a central log store. Name the logging or SIEM product only if known; otherwise keep [SIEM]. Review cadence and retention are not finalized in this practice pack.",
+        "guidance": "Make the statement assessor-testable: event types, reviewer role, review cadence, and retention. Use placeholders for unnamed tools and unknown clocks. Do not invent a product or a retention number."
+      },
+      "what_good_looks_like": [
+        "AU-2 is the only control being described.",
+        "Event types are named or clearly listed as still to be decided.",
+        "Who reviews the logs (role, not a made-up person) is stated or marked as a placeholder.",
+        "Retention and review cadence use placeholders if no number was given.",
+        "No SIEM or ticket product is invented.",
+        "A tester could ask “show me these events in the log store.”"
+      ]
+    },
+    {
+      "slug": "low-stale-finding",
+      "title": "Low severity stale finding",
+      "difficulty": "intro",
+      "mode": "poam",
+      "learning_goal": "See why even a Low item needs a current plan so it does not sit forgotten.",
+      "guide": "/guide#severity-timelines",
+      "chat_question": "What happens if a Low POA&M item goes stale?",
+      "fields": {
+        "finding": "CivicInbox’s internal status page is missing a Secure cookie flag. Severity is Low. The item has been Open since mid-January with no milestone update. CivicInbox is a fictional internal notice page for practice.",
+        "severity": "Low",
+        "status": "Open",
+        "system_name": "CivicInbox",
+        "poc": "Morgan Ellis, ISSO",
+        "detector_source": "ACAS/Nessus",
+        "plugin_id": "",
+        "discovery_date": "2026-01-12",
+        "control_id": "SC-8",
+        "vendor_dependency": "no",
+        "vendor_notes": "",
+        "guidance": "Low-severity items commonly have about 180 days from discovery. This practice item is already past that window and has no recent milestone. Write a current plan and do not leave it silently Open. Do not invent a plugin ID."
+      },
+      "what_good_looks_like": [
+        "Severity stays Low; it is not quietly upgraded or ignored.",
+        "The write-up notices the item is old (opened 12 January 2026) and needs a fresh plan.",
+        "A next milestone or owner action is named — not “we will get to it.”",
+        "Status may stay Open or move to Delayed, with a reason.",
+        "No plugin ID is invented.",
+        "The tone treats Low as still tracked work, not optional junk."
+      ]
+    },
+    {
+      "slug": "stig-vs-acas",
+      "title": "STIG vs ACAS: a setup miss is not a scan hole",
+      "difficulty": "intermediate",
+      "mode": "poam",
+      "learning_goal": "Keep a configuration checklist miss separate from a vulnerability scan hole in the write-up.",
+      "guide": "/guide#acas-vs-stig",
+      "chat_question": "What is the difference between ACAS and STIG?",
+      "fields": {
+        "finding": "A reviewer mixed two issues on the same fictional HarborDesk jump host. This item is the STIG setup miss only: SSH root login is enabled. It is not an ACAS plugin finding and should not be written as a software hole.",
+        "severity": "High",
+        "status": "Open",
+        "system_name": "HarborDesk",
+        "poc": "Jordan Hale, ISSO",
+        "detector_source": "STIG",
+        "plugin_id": "",
+        "discovery_date": "2026-08-28",
+        "control_id": "IA-2",
+        "vendor_dependency": "no",
+        "vendor_notes": "",
+        "guidance": "Use POA&M mode. Detector source is STIG, not ACAS/Nessus. Describe a configuration miss (root SSH login enabled) and the planned setting change. Do not invent a plugin ID or talk about a software CVE."
+      },
+      "what_good_looks_like": [
+        "Detector source reads STIG (a setup checklist), not ACAS/Nessus.",
+        "The weakness is “root SSH login is enabled,” not a software version hole.",
+        "No plugin ID or CVE is invented.",
+        "The planned fix is a configuration change (disable root login) plus a re-check against the checklist.",
+        "Workbench mode is POA&M — this is a tracked finding, not an SSP how-we-do-it paragraph.",
+        "The draft does not blur STIG and ACAS into one story."
+      ]
+    }
+  ]
+}
