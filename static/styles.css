@@ -691,6 +691,212 @@ h1 {
   text-align: left;
 }
 
+.guide-workspace {
+  grid-template-columns: minmax(200px, 250px) minmax(0, 1fr);
+}
+
+.guide-toc,
+.guide-main {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.guide-toc {
+  border-right: 1px solid var(--line);
+  background: #10171f;
+  padding: 16px 14px 24px;
+}
+
+.guide-toc h2 {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.guide-toc nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-toc a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  padding: 7px 10px;
+  border-radius: 8px;
+}
+
+.guide-toc a:hover {
+  color: var(--text);
+  background: #18222c;
+}
+
+.guide-toc a.active {
+  color: #e8f4f3;
+  background: #244048;
+}
+
+.guide-main {
+  padding: 22px 28px 48px;
+  background: var(--bg-chat);
+}
+
+.guide-chapter {
+  max-width: 68ch;
+  margin: 0 0 42px;
+  scroll-margin-top: 12px;
+}
+
+.guide-chapter h2 {
+  margin: 0 0 14px;
+  font-size: 1.28rem;
+  font-weight: 600;
+}
+
+.guide-chapter h3 {
+  margin: 18px 0 8px;
+  font-size: 1rem;
+  font-weight: 550;
+}
+
+.guide-chapter p,
+.guide-chapter li {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.guide-chapter p {
+  margin: 0 0 12px;
+}
+
+.guide-chapter a:not(.try-chat) {
+  color: var(--accent-strong);
+}
+
+.plain-steps,
+.timeline-list {
+  margin: 0 0 14px;
+  padding-left: 1.2rem;
+  color: var(--text);
+}
+
+.plain-steps li,
+.timeline-list li {
+  margin: 0.35em 0;
+}
+
+.try-chat {
+  display: inline-flex;
+  align-items: center;
+  margin: 4px 0 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--accent-strong);
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+}
+
+.try-chat:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.term-chip {
+  display: inline;
+  margin: 0;
+  padding: 0 1px;
+  border: none;
+  border-bottom: 1px dotted var(--accent);
+  background: transparent;
+  color: var(--accent-strong);
+  font: inherit;
+  cursor: pointer;
+}
+
+.term-chip:hover,
+.term-chip[aria-expanded="true"] {
+  color: var(--text);
+  border-bottom-style: solid;
+}
+
+.term-pop {
+  display: block;
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #10171f;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.term-pop strong {
+  color: var(--accent-strong);
+  font-weight: 550;
+}
+
+.glossary-search-field {
+  max-width: 420px;
+  margin-bottom: 14px;
+}
+
+.glossary-search-field input {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+}
+
+.glossary-search-field input:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.glossary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 68ch;
+}
+
+.glossary-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #10171f;
+}
+
+.glossary-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.glossary-term {
+  font-family: var(--mono);
+  font-size: 0.92rem;
+  color: var(--accent-strong);
+}
+
+.glossary-card p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 1100px) {
   .workbench-main {
     grid-template-columns: 1fr;
@@ -706,6 +912,32 @@ h1 {
 @media (max-width: 880px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .guide-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .guide-toc {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 12px 14px;
+  }
+
+  .guide-toc nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .guide-toc a {
+    white-space: nowrap;
+  }
+
+  .guide-main {
+    padding: 18px 16px 36px;
   }
 
   .field-grid {

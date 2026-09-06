@@ -26,6 +26,17 @@ class DraftRoutingTests(unittest.TestCase):
         self.assertFalse(countgpt.is_drafting_task("Explain IA-2 identification"))
         self.assertFalse(countgpt.is_drafting_task("Summarize requirements for AU-2"))
         self.assertFalse(countgpt.is_drafting_task("Tell me about AC-20"))
+        self.assertFalse(countgpt.is_drafting_task("What is a POA&M?"))
+        self.assertFalse(countgpt.is_drafting_task("SSP vs POA&M?"))
+
+    def test_explain_hints(self):
+        self.assertTrue(countgpt.is_explain_task("What is an SSP?"))
+        self.assertTrue(countgpt.is_explain_task("SSP vs POA&M?"))
+        self.assertTrue(countgpt.is_explain_task("What is a POA&M?"))
+        self.assertTrue(countgpt.is_explain_task("What does an ISSO do?"))
+        self.assertFalse(countgpt.is_explain_task("What does AC-2 require?"))
+        self.assertFalse(countgpt.is_explain_task("What is AC-2?"))
+        self.assertFalse(countgpt.is_explain_task("Draft a POA&M for AC-2"))
 
 
 class HistoryAndPromptTests(unittest.TestCase):
@@ -79,6 +90,13 @@ class HistoryAndPromptTests(unittest.TestCase):
         prompt = countgpt.build_prompt("What is a banana control?", [], [])
         self.assertIn("could not find a confident NIST match", prompt)
         self.assertIn("Do NOT invent control IDs", prompt)
+
+    def test_build_prompt_explain_is_pedagogical(self):
+        prompt = countgpt.build_prompt("What is an SSP?", [], [])
+        self.assertIn("plain English", prompt)
+        self.assertIn("not official policy", prompt)
+        self.assertNotIn("Drafting instructions", prompt)
+        self.assertNotIn("Answer ONLY from the retrieved NIST SP 800-53 rules", prompt)
 
 
 class ExportAndHostTests(unittest.TestCase):

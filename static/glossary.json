@@ -1,0 +1,221 @@
+{
+  "terms": [
+    {
+      "id": "ssp",
+      "term": "SSP",
+      "full": "System Security Plan",
+      "aliases": ["system security plan"],
+      "definition": "The SSP is the written story of how a system is protected. For each security rule, it explains what is in place, who is responsible, and how a reviewer could check that it is true. Think of it as the “how we do security here” binder. CountGPT can draft pieces of it; a real SSP still needs people who know the system to edit and approve it."
+    },
+    {
+      "id": "poam",
+      "term": "POA&M",
+      "full": "Plan of Action and Milestones",
+      "aliases": ["poam", "p.o.a.m", "plan of action and milestones"],
+      "definition": "A POA&M is a living to-do list of security problems that are not fully fixed yet. Each item names the weakness, who owns it, when it should be fixed, and whether it is still open. It is how an organization shows leftover risk is being tracked, not a punishment list. Findings from tests or scans often become POA&M items."
+    },
+    {
+      "id": "sar",
+      "term": "SAR",
+      "full": "Security Assessment Report",
+      "aliases": ["security assessment report"],
+      "definition": "The SAR is the report written after testers examine a system. It records what was tested, what passed, what failed, and how serious each miss is. The SAR is evidence, not a fix plan. Open failures in the SAR usually become items on the POA&M."
+    },
+    {
+      "id": "ato",
+      "term": "ATO",
+      "full": "Authority to Operate",
+      "aliases": ["authority to operate", "authorization to operate"],
+      "definition": "An ATO is official permission for a system to run, granted by an Authorizing Official. It means leftover risk was reviewed and accepted for a period of time — not that the system is perfect. CountGPT cannot grant an ATO and is not an authorization decision."
+    },
+    {
+      "id": "rmf",
+      "term": "RMF",
+      "full": "Risk Management Framework",
+      "aliases": ["risk management framework"],
+      "definition": "The RMF is the step-by-step process many U.S. government programs use to pick security rules, apply them, test them, and decide whether a system may operate. It is a cycle, not a one-time checklist. After permission to operate is granted, the same cycle continues as ongoing watching and reporting."
+    },
+    {
+      "id": "nist-800-53",
+      "term": "NIST 800-53",
+      "full": "NIST Special Publication 800-53",
+      "aliases": ["nist sp 800-53", "800-53", "nist special publication 800-53"],
+      "definition": "This is a public catalog of security and privacy rules published by NIST, a U.S. government lab. Organizations pick which rules apply, then write how they will meet them. CountGPT’s search index is built from this catalog so answers can quote real rule text instead of guessing."
+    },
+    {
+      "id": "control",
+      "term": "control",
+      "full": "security control",
+      "aliases": ["security control", "security rule"],
+      "definition": "A control is one security rule in the catalog — a specific thing you must do, such as manage user accounts or keep logs. Controls have IDs like AC-2. Meeting a control means you have a real process or tool that a tester could check, not just a sentence that sounds good."
+    },
+    {
+      "id": "control-enhancement",
+      "term": "control enhancement",
+      "full": "control enhancement",
+      "aliases": ["enhancement"],
+      "definition": "A control enhancement is an extra requirement attached to a base rule, written like AC-2(1). It adds a stricter or more specific step on top of the main rule. Whether you must do the extra step depends on how sensitive the system is and which extra rule-set your organization uses."
+    },
+    {
+      "id": "isso",
+      "term": "ISSO",
+      "full": "Information System Security Officer",
+      "aliases": ["information system security officer"],
+      "definition": "The ISSO is the day-to-day security caretaker for a system. They track findings, help keep the written plans honest, and coordinate fixes with engineers. They advise and document; they usually do not sign the official permission to operate."
+    },
+    {
+      "id": "issm",
+      "term": "ISSM",
+      "full": "Information System Security Manager",
+      "aliases": ["information system security manager"],
+      "definition": "The ISSM oversees security for one or more systems and supports the day-to-day security officers. They help keep the program consistent and escalate leftover risk. They sit between daily tracking work and the official who accepts risk."
+    },
+    {
+      "id": "ao",
+      "term": "AO",
+      "full": "Authorizing Official",
+      "aliases": ["authorizing official"],
+      "definition": "The Authorizing Official is the person who accepts leftover risk and signs permission for a system to operate. They are the decision-maker, not the person writing drafts. Nothing CountGPT writes is an AO decision."
+    },
+    {
+      "id": "emass",
+      "term": "eMASS",
+      "full": "Enterprise Mission Assurance Support Service",
+      "aliases": ["enterprise mission assurance support service"],
+      "definition": "eMASS is a government web system used as the official filing cabinet for authorization packages in many Department of Defense programs. People enter plans, fix lists, and test results there. CountGPT is not eMASS and does not submit packages."
+    },
+    {
+      "id": "acas",
+      "term": "ACAS",
+      "full": "Assured Compliance Assessment Solution",
+      "aliases": ["assured compliance assessment solution"],
+      "definition": "ACAS is the Department of Defense’s vulnerability scanning program. In conversation it often means a Nessus-style scan that reports known software holes as numbered plugin IDs. An ACAS finding is a scan result, not a “set this product this way” checklist item."
+    },
+    {
+      "id": "stig",
+      "term": "STIG",
+      "full": "Security Technical Implementation Guide",
+      "aliases": ["security technical implementation guide"],
+      "definition": "A STIG is a hardening checklist for a product — the recommended “set it this way” settings. Failing a STIG item means a configuration does not match the guide. That is different from a vulnerability scan that reports a known software hole."
+    },
+    {
+      "id": "residual-risk",
+      "term": "residual risk",
+      "full": "residual risk",
+      "aliases": ["leftover risk"],
+      "definition": "Residual risk is the leftover danger after you have applied your protections. No system is risk-free. The official who grants permission to operate is accepting that leftover risk for a period of time."
+    },
+    {
+      "id": "false-positive",
+      "term": "false positive",
+      "full": "false positive",
+      "aliases": ["fp"],
+      "definition": "A false positive is a finding that looks like a problem but is not one after investigation. Example: a scanner reports missing software that was never installed. You still write down why it is not a real weakness; you do not silently delete it."
+    },
+    {
+      "id": "risk-adjustment",
+      "term": "risk adjustment",
+      "full": "risk adjustment",
+      "aliases": ["ra"],
+      "definition": "A risk adjustment is a documented change to how serious a finding is, after investigation. Someone may lower or raise the label because of extra protections or extra exposure. It needs a written reason and a reviewer — it is not a casual opinion."
+    },
+    {
+      "id": "odp",
+      "term": "ODP",
+      "full": "organization-defined parameter",
+      "aliases": ["organization-defined", "organization defined", "odp / organization-defined"],
+      "definition": "Some catalog rules say the organization must choose a number or process, such as how long to keep logs. That blank is an organization-defined parameter, often called an ODP. CountGPT cannot know your organization’s choice unless you type it in."
+    },
+    {
+      "id": "continuous-monitoring",
+      "term": "Continuous Monitoring",
+      "full": "Continuous Monitoring",
+      "aliases": ["conmon", "ongoing monitoring"],
+      "definition": "Continuous monitoring is the work that continues after permission to operate is granted: scanning, reviewing logs, updating the fix list, and reporting new risk. An ATO is not “set and forget.” The written plans should stay current as the system changes."
+    },
+    {
+      "id": "fedramp",
+      "term": "FedRAMP",
+      "full": "Federal Risk and Authorization Management Program",
+      "aliases": ["federal risk and authorization management program"],
+      "definition": "FedRAMP is a U.S. government program that standardizes how cloud services are authorized for federal use. It uses the NIST 800-53 catalog and has well-known fix-window practices. FedRAMP rules are not automatically the same as every agency’s rules."
+    },
+    {
+      "id": "finding",
+      "term": "finding",
+      "full": "security finding",
+      "aliases": ["weakness", "vulnerability finding"],
+      "definition": "A finding is a recorded problem or miss from a scan, a configuration checklist, or a human tester. Real, open findings usually become items on the fix list. Write what was observed; do not invent scanner numbers you do not have."
+    },
+    {
+      "id": "severity",
+      "term": "severity",
+      "full": "finding severity",
+      "aliases": ["high", "moderate", "low"],
+      "definition": "Severity is a label — often High, Moderate, or Low — for how much harm a finding could cause. It helps people decide what to fix first. Common 30 / 90 / 180-day fix windows are a widespread FedRAMP and DoD-style practice, not a law that applies everywhere."
+    },
+    {
+      "id": "vendor-dependency",
+      "term": "vendor dependency",
+      "full": "vendor dependency",
+      "aliases": ["vendor-dependent"],
+      "definition": "A vendor dependency means you cannot finish the fix until a vendor ships a patch or change. You still track the item and the wait. You do not pretend the problem is gone just because you are waiting on someone else."
+    },
+    {
+      "id": "3pao",
+      "term": "3PAO",
+      "full": "Third Party Assessment Organization",
+      "aliases": ["third party assessment organization", "third-party assessor"],
+      "definition": "A 3PAO is an independent testing company. In FedRAMP-style work they examine the system and write assessment evidence such as a Security Assessment Report. They are reviewers, not the official who grants permission to operate."
+    },
+    {
+      "id": "authorization-boundary",
+      "term": "authorization boundary",
+      "full": "authorization boundary",
+      "aliases": ["system boundary"],
+      "definition": "The authorization boundary is the line around “what counts as this system” for permission to operate. Things inside the line must be described in the System Security Plan. Things outside are someone else’s system, with a documented connection."
+    },
+    {
+      "id": "compensating-control",
+      "term": "compensating control",
+      "full": "compensating control",
+      "aliases": ["alternate control"],
+      "definition": "A compensating control is a different protection you use when you cannot meet a rule the usual way. You must explain why the substitute is good enough. It is not a silent skip, and a reviewer still has to accept it."
+    },
+    {
+      "id": "nessus",
+      "term": "Nessus",
+      "full": "Tenable Nessus",
+      "aliases": ["tenable"],
+      "definition": "Nessus is a vulnerability scanner. In many Department of Defense environments it is the engine behind ACAS scans. Plugin IDs on a finding usually come from this kind of tool. If you do not have the number, leave it blank rather than guessing."
+    },
+    {
+      "id": "plugin-id",
+      "term": "plugin ID",
+      "full": "scanner plugin identifier",
+      "aliases": ["plugin", "plugin number"],
+      "definition": "A plugin ID is the scanner’s number for a specific check. It helps people look up the same finding later. If you do not have the number, leave a placeholder — CountGPT is told not to invent one."
+    },
+    {
+      "id": "overlay",
+      "term": "overlay",
+      "full": "control overlay",
+      "aliases": ["control overlay", "baseline overlay"],
+      "definition": "An overlay is an extra set of rules or fill-in-the-blank choices on top of the base NIST catalog. A community — for example a cloud program or a Department of Defense program — publishes one so systems in that community are measured the same way. It can add rules or make extra steps required."
+    },
+    {
+      "id": "control-family",
+      "term": "control family",
+      "full": "control family",
+      "aliases": ["family"],
+      "definition": "Controls are grouped into families such as Access Control (AC) or Audit and Accountability (AU). The two-letter prefix of a control ID is the family. Families help you find related rules without reading the whole catalog."
+    },
+    {
+      "id": "countgpt",
+      "term": "CountGPT",
+      "full": "CountGPT",
+      "aliases": ["this tool", "this app"],
+      "definition": "CountGPT is a local practice tool. It searches a copy of the NIST 800-53 catalog, then drafts an answer or package paragraph for you to study. It is not official permission to operate, not eMASS, and not a substitute for a qualified reviewer."
+    }
+  ]
+}

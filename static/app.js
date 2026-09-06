@@ -1,9 +1,10 @@
 (() => {
   const EXAMPLES = [
+    "What is an SSP?",
+    "SSP vs POA&M?",
+    "What is AC-2?",
     "What does AC-2 require?",
     "Draft a POA&M for a Moderate finding: weak cipher suite on a web server.",
-    "Write an SSP implementation statement for AU-2 Event Logging.",
-    "Explain IA-2 identification and authentication.",
   ];
 
   const els = {
@@ -53,7 +54,7 @@
     wrap.className = "empty-state";
     wrap.innerHTML = `
       <h2>Ask a control question or request a draft</h2>
-      <p>Answers are grounded in retrieved NIST SP 800-53 controls. Cite IDs stay on the right. For a structured POA&amp;M or SSP draft, open the <a href="/workbench">workbench</a>.</p>
+      <p>Answers are grounded in retrieved NIST SP 800-53 controls. Cite IDs stay on the right. New to the terms? Start with the <a href="/guide">learning guide</a>. For a structured POA&amp;M or SSP draft, open the <a href="/workbench">workbench</a>.</p>
     `;
     const row = document.createElement("div");
     row.className = "examples";
@@ -109,7 +110,7 @@
     document.getElementById("typing-row")?.remove();
   }
 
-  function renderSources(matches, drafting) {
+  function renderSources(matches, drafting, explain) {
     const list = matches || [];
     if (!list.length) {
       els.sourcesList.hidden = true;
@@ -121,7 +122,7 @@
     els.sourcesEmpty.hidden = true;
     els.sourcesList.hidden = false;
     els.sourcesMode.classList.remove("hidden");
-    els.sourcesMode.textContent = drafting ? "drafting" : "lookup";
+    els.sourcesMode.textContent = drafting ? "drafting" : explain ? "explain" : "lookup";
     els.sourcesList.replaceChildren();
     for (const match of list) {
       const card = document.createElement("article");
@@ -188,8 +189,9 @@
         answer: data.answer || "",
         matches: data.matches || [],
         drafting: Boolean(data.drafting),
+        explain: Boolean(data.explain),
       };
-      renderSources(data.matches, data.drafting);
+      renderSources(data.matches, data.drafting, data.explain);
       setExportEnabled(Boolean((data.answer || "").trim()));
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
@@ -211,8 +213,17 @@
     state.history = [];
     state.lastTurn = null;
     renderMessages();
-    renderSources([], false);
+    renderSources([], false, false);
     setExportEnabled(false);
+    els.input.focus();
+  }
+
+  function prefillFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const q = (params.get("q") || "").trim();
+    if (!q) return;
+    els.input.value = q;
+    resizeInput();
     els.input.focus();
   }
 
@@ -311,5 +322,6 @@
   els.sourcesBackdrop.addEventListener("click", () => toggleSources(false));
 
   resetChat();
+  prefillFromQuery();
   refreshHealth();
 })();

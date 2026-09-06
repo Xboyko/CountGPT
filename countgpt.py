@@ -40,6 +40,39 @@ LOOKUP_HINT = re.compile(
     re.IGNORECASE,
 )
 
+EXPLAIN_HINT = re.compile(
+    r"\b("
+    r"what\s+is|what\s+are|what\s+does|what\s+should|"
+    r"explain|define|meaning\s+of|"
+    r"vs\.?|versus|difference\s+between|"
+    r"who\s+(is|are|does)|how\s+(does|do|is|are|should)|"
+    r"in\s+plain\s+english|glossary"
+    r")\b",
+    re.IGNORECASE,
+)
+
+LEARNING_TERM_HINT = re.compile(
+    r"\b("
+    r"ssp|system\s+security\s+plan|"
+    r"poa\s*&\s*m|poam|p\.o\.a\.m|"
+    r"sar|security\s+assessment\s+report|"
+    r"ato|authority\s+to\s+operate|authorization\s+to\s+operate|"
+    r"rmf|risk\s+management\s+framework|"
+    r"isso|issm|\bao\b|authorizing\s+official|"
+    r"emass|acas|stig|fedramp|3pao|"
+    r"residual\s+risk|false\s+positive|risk\s+adjustment|"
+    r"continuous\s+monitoring|conmon|"
+    r"control\s+enhancement|organization[- ]defined|\bodp\b|"
+    r"countgpt"
+    r")\b",
+    re.IGNORECASE,
+)
+
+EXPLICIT_DRAFT_VERB = re.compile(
+    r"\b(draft|write\s+a|generate\s+a|create\s+a|fill\s+out)\b",
+    re.IGNORECASE,
+)
+
 DISCLAIMER_TITLE = "Draft / not assessor-validated"
 DISCLAIMER_TEXT = (
     "CountGPT drafts POA&Ms, SSP statements, and control lookups for learning "
@@ -91,8 +124,21 @@ def dry_run_enabled() -> bool:
 def dry_run_answer(question: str, matches: list) -> str:
     """Deterministic grounded stub used when COUNTGPT_DRY_RUN is set."""
     drafting = is_drafting_task(question)
-    mode = "drafting" if drafting else "lookup"
+    explain = is_explain_task(question)
+    if drafting:
+        mode = "drafting"
+    elif explain:
+        mode = "explain"
+    else:
+        mode = "lookup"
     if not matches:
+        if explain:
+            return (
+                "This looks like a learning question rather than a named control. "
+                "In a full run I would explain the term in plain English and would "
+                "not invent organization policy or control IDs. "
+                f"({DISCLAIMER_TITLE}.)"
+            )
         return (
             "I could not find a confident NIST 800-53 match for this question. "
             "Name a control ID (for example AC-2) or rephrase. "
@@ -153,12 +199,29 @@ def reset_store_state() -> None:
     STORE_ERROR = None
 
 
+def has_control_id(question: str) -> bool:
+    return bool(retrieve.CONTROL_ID_RE.search(question or ""))
+
+
+def is_explain_task(question: str) -> bool:
+    """True for glossary / process teaching questions, not control-ID lookups."""
+    q = question or ""
+    if not q or is_drafting_task(q):
+        return False
+    if has_control_id(q):
+        return False
+    if EXPLAIN_HINT.search(q) or LEARNING_TERM_HINT.search(q):
+        return True
+    return False
+
+
 def is_drafting_task(question: str) -> bool:
     q = question or ""
+    learning = bool(LOOKUP_HINT.search(q) or EXPLAIN_HINT.search(q))
+    if learning and not EXPLICIT_DRAFT_VERB.search(q):
+        return False
     if DRAFT_HINT.search(q):
         return True
-    if LOOKUP_HINT.search(q) and not DRAFT_HINT.search(q):
-        return False
     return False
 
 
@@ -197,6 +260,9 @@ def build_prompt(question, history, matches):
     history_block = (
         f"Recent conversation:\n{history_text}\n\n" if history_text else ""
     )
+
+    if is_explain_task(question):
+        return build_explain_prompt(question, history_block, matches)
 
     if not matches:
         return (
@@ -244,6 +310,47 @@ If the rules do not cover the question, say so. Do not invent controls or requir
 Question: {question}
 
 Answer:"""
+
+
+def build_explain_prompt(question, history_block, matches) -> str:
+    """Teacher-mode prompt: plain English, no invented policy."""
+    if matches:
+        context_text = retrieve.format_matches(matches)
+        cited = ", ".join(sorted({m["id"] for m in matches if m.get("id")}))
+        rules_block = (
+            f"Retrieved NIST SP 800-53 text (optional grounding; cite {cited} "
+            f"only if it truly belongs to the question):\n{context_text}\n\n"
+        )
+    else:
+        rules_block = (
+            "Retrieval found no NIST 800-53 controls that match this question "
+            "closely enough (no control ID in the question matched the catalog, "
+            "and no embedding scored above the similarity floor).\n"
+            "Do NOT invent control IDs, quotes, or requirements. If the question "
+            "is about a named control, say clearly that you could not find a "
+            "confident NIST match, and suggest naming a control ID (for example "
+            "AC-2) or rephrasing. If the question is a process or role term "
+            "(SSP, POA&M, ATO, RMF, ISSO, and similar), teach the term in plain "
+            "English without inventing a control ID.\n\n"
+        )
+    return (
+        "You are CountGPT, a patient teacher for people new to cybersecurity "
+        "compliance.\n"
+        "Explain in plain English. Use short paragraphs. Define jargon on first "
+        "use. This is a learning explanation, not official policy, an "
+        "authorization decision, or assessor-validated guidance.\n"
+        "Do not invent organization-specific rules, plugin IDs, scanner results, "
+        "or claims that “your agency requires X.”\n"
+        "When you mention common FedRAMP or DoD-style practice (for example "
+        "30/90/180-day fix windows), label it as common practice, not universal "
+        "law.\n"
+        "If retrieved NIST rules are relevant, stay faithful to their text and "
+        "cite the IDs. If they are not about the term being asked, do not force "
+        "a citation.\n\n"
+        f"{history_block}"
+        f"{rules_block}"
+        f"Question: {question}\n\nAnswer:"
+    )
 
 
 def format_matches_markdown(matches: list) -> str:
@@ -351,11 +458,13 @@ def chat_turn(message: str, history=None) -> dict[str, Any]:
     history = history or []
     message = (message or "").strip()
     drafting = is_drafting_task(message)
+    explain = is_explain_task(message)
     answer, matches = generate_answer(message, history)
     return {
         "answer": answer,
         "matches": [serialize_match(m) for m in matches],
         "drafting": drafting,
+        "explain": explain,
         "question": message,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
