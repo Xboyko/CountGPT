@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CountGPT Learning Guide</title>
+    <meta
+      name="description"
+      content="Beginner guide to CountGPT, NIST 800-53, RMF documents, and ISSO terms."
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="28" height="28">
+              <rect x="3" y="4" width="26" height="24" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10 12h12M10 16.5h8M10 21h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div>
+            <h1>CountGPT</h1>
+            <p class="subtitle">Beginner learning guide and glossary</p>
+          </div>
+        </div>
+        <nav class="shell-nav" aria-label="Primary">
+          <a href="/" class="nav-link">Chat</a>
+          <a href="/workbench" class="nav-link">Workbench</a>
+          <a href="/guide" class="nav-link active" aria-current="page">Guide</a>
+        </nav>
+        <div class="top-actions">
+          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+        </div>
+      </header>
+
+      <div class="disclaimer" role="note">
+        <strong>Draft / not assessor-validated.</strong>
+        This guide is a study aid — not official policy, not an ATO, and not eMASS.
+        Always check your organization’s rules.
+      </div>
+
+      <div class="workspace guide-workspace">
+        <aside class="guide-toc" aria-label="Guide chapters">
+          <h2>Chapters</h2>
+          <nav>
+            <a href="#what-countgpt-is">What CountGPT is</a>
+            <a href="#nist-800-53">NIST SP 800-53</a>
+            <a href="#rmf-ato">RMF &amp; ATO</a>
+            <a href="#ssp-vs-poam">SSP vs POA&amp;M vs SAR</a>
+            <a href="#roles">Roles</a>
+            <a href="#severity-timelines">Severity &amp; timelines</a>
+            <a href="#acas-vs-stig">ACAS vs STIG</a>
+            <a href="#how-countgpt-answers">How answers work</a>
+            <a href="#practice-scenarios">Practice scenarios</a>
+            <a href="#glossary">Glossary</a>
+          </nav>
+        </aside>
+
+        <main class="guide-main">
+          <article id="what-countgpt-is" class="guide-chapter">
+            <h2>What CountGPT is</h2>
+            <section>
+              <h3>A practice tool, not a stamp of approval</h3>
+              <p>
+                CountGPT is a study partner for people learning government-style
+                cybersecurity paperwork. You ask a question. It looks up the real
+                wording of a security rule, then writes an answer you can read and
+                edit.
+              </p>
+              <p>
+                It is not an official decision-maker. It cannot give a system
+                permission to go live. It cannot replace a human reviewer who signs
+                papers for your organization.
+              </p>
+            </section>
+            <section>
+              <h3>What you can practice here</h3>
+              <p>
+                Use <a href="/">Chat</a> to look up a rule or ask what a term
+                means. Use the <a href="/workbench">Workbench</a> when you want a
+                structured draft of a fix-list item or a “how we protect this
+                system” paragraph.
+              </p>
+              <p>
+                Treat every answer as homework, not as a finished package. If the
+                retrieved rule on the right is the wrong one, the draft will be
+                wrong too.
+              </p>
+              <a class="try-chat" href="/?q=What%20should%20I%20use%20CountGPT%20for%2C%20and%20what%20should%20I%20not%20use%20it%20for%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="nist-800-53" class="guide-chapter">
+            <h2>NIST SP 800-53 in plain English</h2>
+            <section>
+              <h3>A catalog of security rules</h3>
+              <p>
+                <button type="button" class="term-chip" data-term="nist-800-53">NIST</button>
+                is a U.S. government lab that publishes how-to documents for
+                technology. Special Publication 800-53 is one of those documents:
+                a catalog of security rules.
+              </p>
+              <p>
+                Each rule is called a
+                <button type="button" class="term-chip" data-term="control">control</button>.
+                A control is a specific thing you must do to protect a system —
+                for example, manage user accounts, or keep logs of important
+                events.
+              </p>
+            </section>
+            <section>
+              <h3>IDs, families, and extra steps</h3>
+              <p>
+                You will see IDs like <code>AC-2</code>. The letters are a
+                <button type="button" class="term-chip" data-term="control-family">family</button>
+                (AC means Access Control). The number is the specific rule.
+              </p>
+              <p>
+                Some rules have add-ons called
+                <button type="button" class="term-chip" data-term="control-enhancement">control enhancements</button>,
+                written like <code>AC-2(1)</code>. Those are extra steps on top of
+                the main rule. Whether you must do them depends on how sensitive
+                the system is.
+              </p>
+              <a class="try-chat" href="/?q=What%20is%20AC-2%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="rmf-ato" class="guide-chapter">
+            <h2>RMF &amp; ATO</h2>
+            <section>
+              <h3>Permission to operate</h3>
+              <p>
+                Before many government systems are allowed to run, someone with
+                authority has to say “yes, the leftover risk is acceptable.” That
+                written permission is an
+                <button type="button" class="term-chip" data-term="ato">ATO</button>
+                — Authority to Operate.
+              </p>
+              <p>
+                The process used to get there is the
+                <button type="button" class="term-chip" data-term="rmf">RMF</button>
+                — Risk Management Framework. CountGPT can help you practice the
+                writing and lookup parts. It does not grant an ATO.
+              </p>
+            </section>
+            <section>
+              <h3>The high-level steps</h3>
+              <ol class="plain-steps">
+                <li>Describe what you are protecting and how sensitive it is.</li>
+                <li>Pick the security rules that apply.</li>
+                <li>Write down how you will follow those rules.</li>
+                <li>Test whether you actually follow them.</li>
+                <li>A person in charge accepts leftover risk and grants or denies the ATO.</li>
+                <li>Keep watching the system after it is live.</li>
+              </ol>
+              <a class="try-chat" href="/?q=What%20is%20an%20ATO%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="ssp-vs-poam" class="guide-chapter">
+            <h2>SSP vs POA&amp;M vs SAR</h2>
+            <section>
+              <h3>Three documents that travel together</h3>
+              <p>
+                These three papers usually sit in the same authorization package —
+                the folder of evidence used to ask for permission to operate.
+              </p>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="ssp">SSP</button>
+                (System Security Plan) is the “how we protect this system” story.
+                For each rule, it says what is in place today.
+              </p>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="poam">POA&amp;M</button>
+                (Plan of Action and Milestones) is the “what is still broken, and
+                when we will fix it” list. Each item has an owner, a due date, and
+                a status.
+              </p>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="sar">SAR</button>
+                (Security Assessment Report) is the “what testers found” report.
+                Independent reviewers write what passed, what failed, and how
+                serious each miss is.
+              </p>
+            </section>
+            <section>
+              <h3>How they connect</h3>
+              <p>
+                Testers write findings in the SAR. Open problems become POA&amp;M
+                items. The SSP should stay honest about what is implemented versus
+                what is still being fixed. If those three stories disagree, a
+                reviewer will notice.
+              </p>
+              <a class="try-chat" href="/?q=SSP%20vs%20POA%26M%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="roles" class="guide-chapter">
+            <h2>Roles: ISSO, ISSM, AO</h2>
+            <section>
+              <h3>Who does the daily work</h3>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="isso">ISSO</button>
+                (Information System Security Officer) is the day-to-day security
+                person for a system. They track findings, keep documents current,
+                and help engineers fix problems.
+              </p>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="issm">ISSM</button>
+                (Information System Security Manager) is a step above. They
+                oversee security across one or more systems and support the ISSO.
+              </p>
+            </section>
+            <section>
+              <h3>Who accepts the leftover risk</h3>
+              <p>
+                The
+                <button type="button" class="term-chip" data-term="ao">AO</button>
+                (Authorizing Official) is the person who accepts leftover risk
+                and signs the ATO. They are the decision-maker, not the person
+                writing the drafts.
+              </p>
+              <p>
+                In many shops the ISSO drafts, the ISSM reviews, and the AO
+                decides. Titles vary. The idea does not: writing help is not the
+                same as authorization.
+              </p>
+              <a class="try-chat" href="/?q=What%20does%20an%20ISSO%20do%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="severity-timelines" class="guide-chapter">
+            <h2>Severity &amp; fix timelines</h2>
+            <section>
+              <h3>How serious is the problem?</h3>
+              <p>
+                When a problem is found, it usually gets a
+                <button type="button" class="term-chip" data-term="severity">severity</button>
+                label: High, Moderate, or Low. That label is a judgment about how
+                much harm the problem could cause.
+              </p>
+            </section>
+            <section>
+              <h3>Common practice — not universal law</h3>
+              <p>
+                A common
+                <button type="button" class="term-chip" data-term="fedramp">FedRAMP</button>
+                and Department of Defense-style practice is to aim for these fix
+                windows from the day the problem was found:
+              </p>
+              <ul class="timeline-list">
+                <li><strong>High:</strong> 30 days</li>
+                <li><strong>Moderate:</strong> 90 days</li>
+                <li><strong>Low:</strong> 180 days</li>
+              </ul>
+              <p>
+                Your organization may use different clocks.
+                <button type="button" class="term-chip" data-term="vendor-dependency">Vendor delays</button>
+                and accepted risk can change the plan. Always check your own
+                policy. The Workbench uses these windows as a starting template
+                only.
+              </p>
+              <a class="try-chat" href="/?q=What%20are%20common%20High%20Moderate%20Low%20fix%20timelines%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="acas-vs-stig" class="guide-chapter">
+            <h2>ACAS vs STIG</h2>
+            <section>
+              <h3>Two different kinds of findings</h3>
+              <p>
+                <button type="button" class="term-chip" data-term="acas">ACAS</button>
+                is a scanning program used in the Department of Defense. In
+                practice people often mean a Nessus-style vulnerability scan: the
+                tool checks computers for known holes and reports plugin IDs.
+              </p>
+              <p>
+                A
+                <button type="button" class="term-chip" data-term="stig">STIG</button>
+                (Security Technical Implementation Guide) is a configuration
+                checklist. It says how a product should be set up — which settings
+                should be on or off.
+              </p>
+            </section>
+            <section>
+              <h3>Do not mix them up in a write-up</h3>
+              <p>
+                A scan finding (“this software version has a known hole”) is
+                different from a STIG finding (“this setting is not hardened”).
+                Both can become POA&amp;M items. When you describe the weakness,
+                say which kind of check produced it, and do not invent a plugin
+                number you do not have.
+              </p>
+              <a class="try-chat" href="/?q=What%20is%20the%20difference%20between%20ACAS%20and%20STIG%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="how-countgpt-answers" class="guide-chapter">
+            <h2>How CountGPT answers</h2>
+            <section>
+              <h3>Look up real rule text first</h3>
+              <p>
+                When you ask a question, CountGPT first searches a local copy of
+                the real NIST SP 800-53 control text. That search is called
+                retrieval. Matching rule IDs and short excerpts show up in the
+                Sources panel.
+              </p>
+              <p>
+                Then it drafts an answer using those retrieved rules. If you asked
+                for a POA&amp;M or SSP paragraph, it writes a draft you can edit.
+                Learning questions (what is an SSP, who is the ISSO) are answered
+                as teaching, not as official policy.
+              </p>
+            </section>
+            <section>
+              <h3>Always review</h3>
+              <p>
+                Read the sources. If the retrieved control is wrong, the draft
+                will be wrong. Never paste a draft into an official package
+                without a human review. The yellow banner is there on purpose.
+              </p>
+              <a class="try-chat" href="/?q=What%20does%20AC-2%20require%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="practice-scenarios" class="guide-chapter">
+            <h2>Practice scenarios</h2>
+            <section>
+              <h3>Fictional cases you can load in the Workbench</h3>
+              <p>
+                These cases are labeled <strong>Practice / fictional</strong>.
+                They are not real systems. Each one prefills the Workbench form
+                so you can write a draft, then compare it to a short “what good
+                looks like” list. Nothing is sent to the model until you press
+                Generate.
+              </p>
+              <p>
+                Open a card to jump to
+                <code>/workbench?scenario=…</code>. Use field help (“Why this
+                field?”) if a box is new to you.
+              </p>
+            </section>
+            <p id="practice-status" class="sources-empty">Loading practice scenarios…</p>
+            <div id="practice-list" class="practice-list"></div>
+          </article>
+
+          <article id="glossary" class="guide-chapter">
+            <h2>Glossary</h2>
+            <p class="form-lead">
+              Search any term on this page. Short definitions; tap a word in a
+              chapter to expand it in place.
+            </p>
+            <label class="field glossary-search-field">
+              <span class="sr-only">Search glossary</span>
+              <input
+                id="glossary-search"
+                type="search"
+                placeholder="Search terms — SSP, POA&amp;M, ISSO…"
+                autocomplete="off"
+              />
+            </label>
+            <p id="glossary-status" class="sources-empty">Loading glossary…</p>
+            <div id="glossary-list" class="glossary-list"></div>
+          </article>
+        </main>
+      </div>
+    </div>
+
+    <script src="/static/guide.js"></script>
+  </body>
+</html>

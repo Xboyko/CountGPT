@@ -1,0 +1,54 @@
+{
+  "title": "CountGPT learning guide",
+  "purpose": "Plain-English introduction to CountGPT, NIST 800-53, RMF documents, and common ISSO terms.",
+  "chapters": [
+    {
+      "id": "what-countgpt-is",
+      "title": "What CountGPT is",
+      "try_in_chat": "What should I use CountGPT for, and what should I not use it for?"
+    },
+    {
+      "id": "nist-800-53",
+      "title": "NIST SP 800-53 in plain English",
+      "try_in_chat": "What is AC-2?"
+    },
+    {
+      "id": "rmf-ato",
+      "title": "RMF & ATO",
+      "try_in_chat": "What is an ATO?"
+    },
+    {
+      "id": "ssp-vs-poam",
+      "title": "SSP vs POA&M vs SAR",
+      "try_in_chat": "SSP vs POA&M?"
+    },
+    {
+      "id": "roles",
+      "title": "Roles: ISSO, ISSM, AO",
+      "try_in_chat": "What does an ISSO do?"
+    },
+    {
+      "id": "severity-timelines",
+      "title": "Severity & fix timelines",
+      "try_in_chat": "What are common High Moderate Low fix timelines?"
+    },
+    {
+      "id": "acas-vs-stig",
+      "title": "ACAS vs STIG",
+      "try_in_chat": "What is the difference between ACAS and STIG?"
+    },
+    {
+      "id": "how-countgpt-answers",
+      "title": "How CountGPT answers",
+      "try_in_chat": "What does AC-2 require?"
+    },
+    {
+      "id": "practice-scenarios",
+      "title": "Practice scenarios"
+    },
+    {
+      "id": "glossary",
+      "title": "Glossary"
+    }
+  ]
+}

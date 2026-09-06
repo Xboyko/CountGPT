@@ -114,7 +114,9 @@ def main() -> None:
             print("\nSetup incomplete. Run: python setup_data.py")
             raise SystemExit(1)
         print("\nAll required data artifacts look ready.")
-        print("Launch UI:  python chat_website.py")
+        print("Launch UI:  uvicorn app:app --reload --host 0.0.0.0 --port 7860")
+        print("Or:         python app.py")
+        print("Legacy UI:  python chat_gradio.py")
         print("Or CLI:     python ask_chatbot.py")
         return
 
@@ -147,7 +149,9 @@ def main() -> None:
     print("\nSetup complete.")
     print("Next:")
     print("  1. ollama pull llama3.1:8b   # once, if you have not already")
-    print("  2. python chat_website.py    # Gradio UI")
+    print("  2. uvicorn app:app --reload --host 0.0.0.0 --port 7860")
+    print("     python app.py             # same HTML UI")
+    print("     python chat_gradio.py     # legacy Gradio UI")
     print("     python ask_chatbot.py     # one-shot CLI")
 
 
