@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -54,6 +55,7 @@ class ChatResponse(BaseModel):
     answer: str
     matches: list[MatchOut]
     drafting: bool
+    explain: bool = False
 
 
 class ExportRequest(BaseModel):
@@ -114,6 +116,7 @@ def chat(req: ChatRequest) -> ChatResponse:
         answer=result["answer"],
         matches=[MatchOut(**m) for m in result["matches"]],
         drafting=result["drafting"],
+        explain=bool(result.get("explain")),
     )
 
 
@@ -191,6 +194,45 @@ def workbench():
     if not page.is_file():
         raise HTTPException(status_code=500, detail="static/workbench.html is missing")
     return FileResponse(page)
+
+
+@app.get("/guide")
+def guide():
+    page = STATIC_DIR / "guide.html"
+    if not page.is_file():
+        raise HTTPException(status_code=500, detail="static/guide.html is missing")
+    return FileResponse(page)
+
+
+def _load_static_json(name: str) -> dict:
+    path = STATIC_DIR / name
+    if not path.is_file():
+        raise HTTPException(status_code=500, detail=f"static/{name} is missing")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"static/{name} is invalid JSON") from exc
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=500, detail=f"static/{name} must be an object")
+    return data
+
+
+@app.get("/api/glossary")
+def glossary():
+    data = _load_static_json("glossary.json")
+    terms = data.get("terms")
+    if not isinstance(terms, list):
+        raise HTTPException(status_code=500, detail="glossary terms are missing")
+    return data
+
+
+@app.get("/api/guide")
+def guide_meta():
+    data = _load_static_json("guide-meta.json")
+    chapters = data.get("chapters")
+    if not isinstance(chapters, list):
+        raise HTTPException(status_code=500, detail="guide chapters are missing")
+    return data
 
 
 if STATIC_DIR.is_dir():

@@ -24,7 +24,9 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/static/app.js", res.text)
         self.assertIn("/workbench", res.text)
+        self.assertIn("/guide", res.text)
         self.assertIn("Chat", res.text)
+        self.assertIn("Guide", res.text)
 
     def test_static_js_and_css(self):
         js = self.client.get("/static/app.js")
@@ -32,6 +34,8 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(js.status_code, 200)
         self.assertEqual(css.status_code, 200)
         self.assertIn("/api/chat", js.text)
+        self.assertIn("What is an SSP?", js.text)
+        self.assertIn('params.get("q")', js.text)
 
     def test_health_shape(self):
         res = self.client.get("/api/health")
@@ -106,6 +110,37 @@ class AppApiTests(unittest.TestCase):
             )
         self.assertEqual(res.status_code, 200)
         self.assertTrue(res.json()["drafting"])
+        self.assertFalse(res.json()["explain"])
+
+    def test_chat_marks_explain_for_glossary_question(self):
+        with patch.object(countgpt, "STORE_OK", True), patch.object(
+            countgpt,
+            "generate_answer",
+            return_value=("An SSP is the written story of how a system is protected.", []),
+        ):
+            res = self.client.post(
+                "/api/chat",
+                json={"message": "What is an SSP?", "history": []},
+            )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["explain"])
+        self.assertFalse(data["drafting"])
+        self.assertIn("system is protected", data["answer"].lower())
+
+    def test_learning_poam_question_is_not_a_draft(self):
+        with patch.object(countgpt, "STORE_OK", True), patch.object(
+            countgpt,
+            "generate_answer",
+            return_value=("A POA&M is a living fix list.", []),
+        ):
+            res = self.client.post(
+                "/api/chat",
+                json={"message": "What is a POA&M?", "history": []},
+            )
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(res.json()["drafting"])
+        self.assertTrue(res.json()["explain"])
 
     def test_chat_ollama_error_is_502(self):
         with patch.object(countgpt, "STORE_OK", True), patch.object(
@@ -151,6 +186,8 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("POA&amp;M", res.text)
         self.assertIn("/static/workbench.js", res.text)
         self.assertIn("Draft / not assessor-validated", res.text)
+        self.assertIn("/guide", res.text)
+        self.assertIn("Guide", res.text)
 
     def test_workbench_js_calls_poam_and_ssp(self):
         js = self.client.get("/static/workbench.js")
@@ -246,6 +283,78 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn("text/csv", res.headers.get("content-type", ""))
         self.assertIn("row_type", res.text)
+
+    def test_guide_page_serves_html(self):
+        res = self.client.get("/guide")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("text/html", res.headers.get("content-type", ""))
+        self.assertIn("Learning Guide", res.text)
+        self.assertIn("SSP vs POA&amp;M", res.text)
+        self.assertIn("glossary-search", res.text)
+        self.assertIn('href="/"', res.text)
+        self.assertIn('href="/workbench"', res.text)
+        self.assertIn('href="/guide"', res.text)
+        self.assertIn("Chat", res.text)
+        self.assertIn("Workbench", res.text)
+        self.assertIn("Guide", res.text)
+        self.assertIn("/static/guide.js", res.text)
+        js = self.client.get("/static/guide.js")
+        self.assertEqual(js.status_code, 200)
+        self.assertIn("/api/glossary", js.text)
+
+    def test_glossary_api_has_required_keys(self):
+        res = self.client.get("/api/glossary")
+        self.assertEqual(res.status_code, 200)
+        terms = res.json()["terms"]
+        ids = {item["id"] for item in terms}
+        labels = {item["term"] for item in terms}
+        required_ids = {
+            "ssp",
+            "poam",
+            "sar",
+            "ato",
+            "rmf",
+            "nist-800-53",
+            "control",
+            "control-enhancement",
+            "isso",
+            "issm",
+            "ao",
+            "emass",
+            "acas",
+            "stig",
+            "residual-risk",
+            "false-positive",
+            "risk-adjustment",
+            "odp",
+            "continuous-monitoring",
+        }
+        self.assertTrue(required_ids.issubset(ids), f"missing {required_ids - ids}")
+        for label in ("SSP", "POA&M", "SAR", "ATO", "RMF", "ISSO", "ACAS", "STIG"):
+            self.assertIn(label, labels)
+        ssp = next(item for item in terms if item["id"] == "ssp")
+        self.assertGreaterEqual(len(ssp["definition"].split()), 20)
+        self.assertLessEqual(len(ssp["definition"].split(".")), 6)
+
+    def test_guide_api_has_chapters(self):
+        res = self.client.get("/api/guide")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        ids = [chapter["id"] for chapter in data["chapters"]]
+        for expected in (
+            "what-countgpt-is",
+            "nist-800-53",
+            "rmf-ato",
+            "ssp-vs-poam",
+            "roles",
+            "severity-timelines",
+            "acas-vs-stig",
+            "how-countgpt-answers",
+            "glossary",
+        ):
+            self.assertIn(expected, ids)
+        ssp_chapter = next(c for c in data["chapters"] if c["id"] == "ssp-vs-poam")
+        self.assertIn("SSP vs POA&M", ssp_chapter["try_in_chat"])
 
 
 if __name__ == "__main__":
