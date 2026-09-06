@@ -1,0 +1,152 @@
+{
+  "description": "Retrieval-only cases for NIST SP 800-53. expected_ids are acceptable catalog IDs (base or common alias). This suite does not score LLM prose.",
+  "k": 4,
+  "min_score": 0.35,
+  "min_hit_rate": 0.70,
+  "cases": [
+    {
+      "id": "ac2-exact",
+      "kind": "exact_id",
+      "query": "What does AC-2 require?",
+      "expected_ids": ["AC-2"]
+    },
+    {
+      "id": "ia2-exact",
+      "kind": "exact_id",
+      "query": "Explain IA-2",
+      "expected_ids": ["IA-2"]
+    },
+    {
+      "id": "au2-exact",
+      "kind": "exact_id",
+      "query": "AU-2 event logging",
+      "expected_ids": ["AU-2"]
+    },
+    {
+      "id": "sc8-exact",
+      "kind": "exact_id",
+      "query": "What is SC-8?",
+      "expected_ids": ["SC-8"]
+    },
+    {
+      "id": "ra5-exact",
+      "kind": "exact_id",
+      "query": "RA-5 vulnerability scanning",
+      "expected_ids": ["RA-5"]
+    },
+    {
+      "id": "si2-exact",
+      "kind": "exact_id",
+      "query": "SI-2 flaw remediation",
+      "expected_ids": ["SI-2"]
+    },
+    {
+      "id": "cm7-exact",
+      "kind": "exact_id",
+      "query": "CM-7 least functionality",
+      "expected_ids": ["CM-7"]
+    },
+    {
+      "id": "ac20-exact-not-ac2",
+      "kind": "exact_id",
+      "query": "What does AC-20 require for external systems?",
+      "expected_ids": ["AC-20"]
+    },
+    {
+      "id": "ac2-enhancement",
+      "kind": "exact_id",
+      "query": "Explain ac-2.1 automated account management",
+      "expected_ids": ["AC-2(1)", "AC-2"]
+    },
+    {
+      "id": "account-management",
+      "kind": "topical",
+      "query": "How should we manage user accounts and disable unused ones?",
+      "expected_ids": ["AC-2"]
+    },
+    {
+      "id": "mfa-login",
+      "kind": "topical",
+      "query": "multi-factor authentication for privileged users",
+      "expected_ids": ["IA-2"]
+    },
+    {
+      "id": "event-logging",
+      "kind": "topical",
+      "query": "what kinds of events should the system log",
+      "expected_ids": ["AU-2"]
+    },
+    {
+      "id": "tls-in-transit",
+      "kind": "topical",
+      "query": "protect confidentiality of data in transit and weak TLS ciphers",
+      "expected_ids": ["SC-8"]
+    },
+    {
+      "id": "vuln-scanning",
+      "kind": "topical",
+      "query": "how often should we scan for vulnerabilities",
+      "expected_ids": ["RA-5"]
+    },
+    {
+      "id": "patch-flaws",
+      "kind": "topical",
+      "query": "install security patches for known software flaws",
+      "expected_ids": ["SI-2"]
+    },
+    {
+      "id": "boundary-protection",
+      "kind": "topical",
+      "query": "network boundary protection and denied-by-default firewalls",
+      "expected_ids": ["SC-7"]
+    },
+    {
+      "id": "least-functionality",
+      "kind": "topical",
+      "query": "disable unused ports and services that are not needed",
+      "expected_ids": ["CM-7"]
+    },
+    {
+      "id": "audit-review",
+      "kind": "topical",
+      "query": "who reviews audit logs and how often",
+      "expected_ids": ["AU-6"]
+    },
+    {
+      "id": "incident-handling",
+      "kind": "topical",
+      "query": "incident handling process after a security event",
+      "expected_ids": ["IR-4"]
+    },
+    {
+      "id": "external-systems",
+      "kind": "hard",
+      "query": "use of external information systems by authorized users",
+      "expected_ids": ["AC-20"]
+    },
+    {
+      "id": "session-lock",
+      "kind": "hard",
+      "query": "lock the session after inactivity",
+      "expected_ids": ["AC-11"]
+    },
+    {
+      "id": "neg-banana",
+      "kind": "negative",
+      "query": "What is a banana control?",
+      "expected_ids": []
+    },
+    {
+      "id": "neg-weather",
+      "kind": "negative",
+      "query": "What is the weather in Baltimore today?",
+      "expected_ids": []
+    },
+    {
+      "id": "neg-recipe",
+      "kind": "negative",
+      "query": "How do I bake sourdough bread?",
+      "expected_ids": []
+    }
+  ]
+}

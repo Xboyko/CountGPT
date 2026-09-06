@@ -18,6 +18,13 @@ Three pages in one local app:
 
 Learning loop: read the Guide → ask Chat → load a practice scenario in Workbench → compare to “what good looks like.”
 
+### What’s new / sophistication
+
+- **Citations you can check.** Chat and Workbench list the retrieved NIST controls with ID, title, score/source, and a short quote of the rule text. Inline chips such as `[AC-2]` jump to that card. If retrieval is empty or only weakly similar, the UI says so — no fake citations.
+- **MissionTracker walkthrough.** A fictional contractor DoD web app story in the Guide: roles, Monday ACAS High finding, what gets written, later SAR / AO / Continuous Monitoring, and a table of “real-life artifact → where it lives in CountGPT.”
+- **ACAS / CSV → POA&M rows.** On the Workbench POA&M form, paste scan lines or upload a simple CSV. The parser is a best-effort learning aid: it maps plugin, severity, host, and synopsis when they are present, never invents IDs or dates, and still waits for you to press Generate.
+- **Retrieval evals.** `evals/retrieval_cases.json` plus `python evals/run_retrieval_eval.py` score the index (hit-rate / precision-at-k), not the model’s prose.
+
 ## Quick start
 
 **Requirements:** Python 3.10–3.12, [Ollama](https://ollama.com), disk for MiniLM + `llama3.1:8b`.
@@ -58,7 +65,12 @@ uvicorn app:app --reload --host 0.0.0.0 --port 7860
 python setup_data.py --check
 python retrieve.py
 python -m unittest test_countgpt.py test_app.py
+python evals/run_retrieval_eval.py --dry-run
+python evals/run_retrieval_eval.py --fixture
+python evals/run_retrieval_eval.py          # real pickle; skips if missing
 ```
+
+The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back — not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
 
 Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.pkl`) is gitignored and created by `setup_data.py`.
 

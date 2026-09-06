@@ -23,6 +23,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("CountGPT", res.text)
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/static/app.js", res.text)
+        self.assertIn("/static/sources.js", res.text)
         self.assertIn("/workbench", res.text)
         self.assertIn("/guide", res.text)
         self.assertIn("Chat", res.text)
@@ -36,6 +37,10 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("/api/chat", js.text)
         self.assertIn("What is an SSP?", js.text)
         self.assertIn('params.get("q")', js.text)
+        sources = self.client.get("/static/sources.js")
+        self.assertEqual(sources.status_code, 200)
+        self.assertIn("used_in_answer", sources.text)
+        self.assertIn("cite-chip", sources.text)
 
     def test_health_shape(self):
         res = self.client.get("/api/health")
@@ -96,6 +101,9 @@ class AppApiTests(unittest.TestCase):
         data = res.json()
         self.assertIn("account management", data["answer"].lower())
         self.assertEqual(data["matches"][0]["id"], "AC-2")
+        self.assertIn("snippet", data["matches"][0])
+        self.assertIn("used_in_answer", data["matches"][0])
+        self.assertIn(data["retrieval_status"], {"ok", "weak", "empty"})
         self.assertFalse(data["drafting"])
 
     def test_chat_marks_drafting(self):
@@ -177,6 +185,8 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("text/markdown", res.headers.get("content-type", ""))
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("AC-2", res.text)
+        self.assertIn("Manage accounts.", res.text)
+        self.assertIn("Snippet", res.text)
         self.assertIn("attachment", res.headers.get("content-disposition", ""))
 
     def test_workbench_page_serves_html(self):
@@ -185,6 +195,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("text/html", res.headers.get("content-type", ""))
         self.assertIn("POA&amp;M", res.text)
         self.assertIn("/static/workbench.js", res.text)
+        self.assertIn("/static/sources.js", res.text)
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/guide", res.text)
         self.assertIn("Guide", res.text)
@@ -194,6 +205,7 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(js.status_code, 200)
         self.assertIn("/api/poam", js.text)
         self.assertIn("/api/ssp", js.text)
+        self.assertIn("/api/parse-findings", js.text)
 
     def test_poam_requires_finding(self):
         missing = self.client.post("/api/poam", json={"severity": "High"})
@@ -283,6 +295,33 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn("text/csv", res.headers.get("content-type", ""))
         self.assertIn("row_type", res.text)
+        self.assertIn("snippet", res.text)
+        self.assertIn("disclaimer", res.text)
+
+    def test_parse_findings_api(self):
+        missing = self.client.post("/api/parse-findings", json={"text": "  "})
+        self.assertEqual(missing.status_code, 400)
+        res = self.client.post(
+            "/api/parse-findings",
+            json={
+                "text": (
+                    "Plugin ID: 51192\n"
+                    "Name: SSL Certificate Cannot Be Trusted\n"
+                    "Severity: High\n"
+                    "Host: mt-web-01\n"
+                    "Synopsis: The certificate cannot be trusted.\n"
+                ),
+                "filename": "sample.txt",
+            },
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["parser"], "best-effort")
+        self.assertIn("not invent", data["disclaimer"].lower())
+        self.assertEqual(len(data["rows"]), 1)
+        self.assertEqual(data["rows"][0]["plugin_id"], "51192")
+        self.assertEqual(data["rows"][0]["severity"], "High")
+        self.assertEqual(data["rows"][0]["discovery_date"], "")
 
     def test_guide_page_serves_html(self):
         res = self.client.get("/guide")
@@ -350,6 +389,7 @@ class AppApiTests(unittest.TestCase):
             "severity-timelines",
             "acas-vs-stig",
             "how-countgpt-answers",
+            "missiontracker",
             "practice-scenarios",
             "glossary",
         ):
@@ -394,6 +434,7 @@ class AppApiTests(unittest.TestCase):
         self.assertLessEqual(len(items), 10)
         slugs = {item["slug"] for item in items}
         self.assertIn("acas-high-weak-cipher", slugs)
+        self.assertIn("missiontracker-acas-high", slugs)
         self.assertTrue(any(item["mode"] == "poam" for item in items))
         self.assertTrue(any(item["mode"] == "ssp" for item in items))
         for item in items:
@@ -417,6 +458,8 @@ class AppApiTests(unittest.TestCase):
         self.assertIn('data-help="poam.severity"', html.text)
         self.assertIn("Why this field?", html.text)
         self.assertIn("Practice / fictional", html.text)
+        self.assertIn("Paste ACAS / Nessus findings or CSV", html.text)
+        self.assertIn("Best-effort / learning aid", html.text)
         js = self.client.get("/static/workbench.js")
         self.assertEqual(js.status_code, 200)
         # /workbench?scenario=<slug> prefills the form and does not auto-generate.
@@ -430,6 +473,9 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("practice-scenarios", res.text)
         self.assertIn("Practice / fictional", res.text)
         self.assertIn("/workbench?scenario=", res.text)
+        self.assertIn("missiontracker", res.text)
+        self.assertIn("Fictional / for learning", res.text)
+        self.assertIn("/workbench?scenario=missiontracker-acas-high", res.text)
         js = self.client.get("/static/guide.js")
         self.assertEqual(js.status_code, 200)
         self.assertIn("/api/scenarios", js.text)

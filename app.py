@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import countgpt
+import parse_findings
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_HOST = "0.0.0.0"
@@ -47,8 +48,10 @@ class MatchOut(BaseModel):
     id: str = ""
     title: str = ""
     text: str = ""
+    snippet: str = ""
     score: float = 0.0
     source: str = ""
+    used_in_answer: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -56,6 +59,8 @@ class ChatResponse(BaseModel):
     matches: list[MatchOut]
     drafting: bool
     explain: bool = False
+    retrieval_status: str = "ok"
+    retrieval_note: str = ""
 
 
 class ExportRequest(BaseModel):
@@ -95,6 +100,13 @@ class WorkbenchResponse(BaseModel):
     draft: str
     matches: list[MatchOut]
     meta: dict
+    retrieval_status: str = "ok"
+    retrieval_note: str = ""
+
+
+class ParseFindingsRequest(BaseModel):
+    text: str = ""
+    filename: str = ""
 
 
 @app.get("/api/health")
@@ -117,6 +129,8 @@ def chat(req: ChatRequest) -> ChatResponse:
         matches=[MatchOut(**m) for m in result["matches"]],
         drafting=result["drafting"],
         explain=bool(result.get("explain")),
+        retrieval_status=result.get("retrieval_status") or "ok",
+        retrieval_note=result.get("retrieval_note") or "",
     )
 
 
@@ -131,7 +145,18 @@ def _workbench_response(mode: str, fields: dict) -> WorkbenchResponse:
         draft=result["draft"],
         matches=[MatchOut(**m) for m in result["matches"]],
         meta=result["meta"],
+        retrieval_status=result.get("retrieval_status") or "ok",
+        retrieval_note=result.get("retrieval_note") or "",
     )
+
+
+@app.post("/api/parse-findings")
+def parse_findings_api(req: ParseFindingsRequest):
+    text = req.text or ""
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="text is required")
+    result = parse_findings.parse_findings(text, filename=req.filename or "")
+    return result
 
 
 @app.post("/api/poam", response_model=WorkbenchResponse)

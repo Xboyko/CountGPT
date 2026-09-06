@@ -34,6 +34,37 @@
       ]
     },
     {
+      "slug": "missiontracker-acas-high",
+      "title": "MissionTracker: Monday ACAS High weak cipher",
+      "difficulty": "intro",
+      "mode": "poam",
+      "learning_goal": "Walk the fictional MissionTracker Monday finding: a High weak-cipher scan hit, a 30-day clock, and no invented plugin ID.",
+      "guide": "/guide#missiontracker",
+      "chat_question": "What should an ISSO do after an ACAS High finding?",
+      "fields": {
+        "finding": "MissionTracker’s public login page still allows a weak TLS cipher suite. An ACAS/Nessus scan reported it on Monday. MissionTracker is a fictional contractor DoD web app used only for practice.",
+        "severity": "High",
+        "status": "Open",
+        "system_name": "MissionTracker",
+        "poc": "Alex Rivera, ISSO",
+        "detector_source": "ACAS/Nessus",
+        "plugin_id": "",
+        "discovery_date": "2026-09-01",
+        "control_id": "SC-8",
+        "vendor_dependency": "no",
+        "vendor_notes": "",
+        "guidance": "Practice the MissionTracker Monday story. Plan to disable weak ciphers, require a modern TLS baseline, and confirm with a follow-up scan. Do not invent a plugin ID. Drafts are not assessor-validated."
+      },
+      "what_good_looks_like": [
+        "The draft is labeled as a draft, not an official eMASS record.",
+        "MissionTracker is named; no real contractor system is invented.",
+        "Severity is High and the usual 30-day clock is tied to 1 September 2026.",
+        "The planned fix is concrete: turn off weak ciphers / require modern TLS, then rescan.",
+        "No plugin ID, CVE, or extra product name appears that was not on the form.",
+        "Status stays Open until the follow-up scan is done."
+      ]
+    },
+    {
       "slug": "moderate-vendor-patch",
       "title": "Moderate: missing patch with a vendor wait",
       "difficulty": "intro",
