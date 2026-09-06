@@ -23,6 +23,8 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("CountGPT", res.text)
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/static/app.js", res.text)
+        self.assertIn("/workbench", res.text)
+        self.assertIn("Chat", res.text)
 
     def test_static_js_and_css(self):
         js = self.client.get("/static/app.js")
@@ -141,6 +143,94 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("AC-2", res.text)
         self.assertIn("attachment", res.headers.get("content-disposition", ""))
+
+    def test_workbench_page_serves_html(self):
+        res = self.client.get("/workbench")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("text/html", res.headers.get("content-type", ""))
+        self.assertIn("POA&amp;M", res.text)
+        self.assertIn("/static/workbench.js", res.text)
+        self.assertIn("Draft / not assessor-validated", res.text)
+
+    def test_workbench_js_calls_poam_and_ssp(self):
+        js = self.client.get("/static/workbench.js")
+        self.assertEqual(js.status_code, 200)
+        self.assertIn("/api/poam", js.text)
+        self.assertIn("/api/ssp", js.text)
+
+    def test_poam_requires_finding(self):
+        missing = self.client.post("/api/poam", json={"severity": "High"})
+        self.assertIn(missing.status_code, {400, 422})
+        empty = self.client.post("/api/poam", json={"finding": "  ", "severity": "High"})
+        self.assertEqual(empty.status_code, 400)
+
+    def test_ssp_requires_control_id(self):
+        missing = self.client.post("/api/ssp", json={"system_name": "WebPortal"})
+        self.assertIn(missing.status_code, {400, 422})
+        empty = self.client.post("/api/ssp", json={"control_id": "   "})
+        self.assertEqual(empty.status_code, 400)
+
+    def test_poam_happy_path_dry_run(self):
+        matches = [
+            {
+                "id": "SC-8",
+                "title": "Transmission Confidentiality and Integrity",
+                "text": "Protect the confidentiality of transmitted information.",
+                "score": 1.0,
+                "source": "id:exact",
+            }
+        ]
+        with patch.dict("os.environ", {"COUNTGPT_DRY_RUN": "1"}), patch.object(
+            countgpt, "STORE_OK", True
+        ), patch.object(countgpt.retrieve, "retrieve", return_value=matches):
+            res = self.client.post(
+                "/api/poam",
+                json={
+                    "finding": "Weak cipher suite on the public web server",
+                    "severity": "High",
+                    "system_name": "WebPortal",
+                    "detector_source": "ACAS/Nessus",
+                    "discovery_date": "2026-09-01",
+                    "control_id": "SC-8",
+                    "status": "Open",
+                },
+            )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("draft", data)
+        self.assertIn("SC-8", data["draft"])
+        self.assertEqual(data["matches"][0]["id"], "SC-8")
+        self.assertEqual(data["meta"]["mode"], "poam")
+        self.assertEqual(data["meta"]["severity_timeline_days"], 30)
+        self.assertTrue(data["meta"]["dry_run"])
+        self.assertIn("ACAS/Nessus", data["meta"]["question"])
+
+    def test_ssp_happy_path_dry_run(self):
+        matches = [
+            {
+                "id": "AU-2",
+                "title": "Event Logging",
+                "text": "Identify the types of events that the system is capable of logging.",
+                "score": 1.0,
+                "source": "id:exact",
+            }
+        ]
+        with patch.dict("os.environ", {"COUNTGPT_DRY_RUN": "1"}), patch.object(
+            countgpt, "STORE_OK", True
+        ), patch.object(countgpt.retrieve, "retrieve", return_value=matches):
+            res = self.client.post(
+                "/api/ssp",
+                json={
+                    "control_id": "AU-2",
+                    "system_name": "WebPortal",
+                    "system_context": "DoD web application; SIEM not named.",
+                },
+            )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("AU-2", data["draft"])
+        self.assertEqual(data["meta"]["mode"], "ssp")
+        self.assertIn("AU-2", data["meta"]["retrieve_query"])
 
     def test_export_csv(self):
         res = self.client.post(

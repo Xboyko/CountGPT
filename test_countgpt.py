@@ -151,5 +151,134 @@ class ExportAndHostTests(unittest.TestCase):
         self.assertIn("Account Management", text)
 
 
+class WorkbenchPromptTests(unittest.TestCase):
+    def test_poam_question_includes_fields_and_placeholders(self):
+        question = countgpt.build_poam_question(
+            {
+                "finding": "Weak TLS cipher on web server",
+                "severity": "High",
+                "system_name": "WebPortal",
+                "poc": "",
+                "detector_source": "ACAS/Nessus",
+                "plugin_id": "",
+                "discovery_date": "2026-09-01",
+                "control_id": "SC-8",
+                "vendor_dependency": "no",
+                "status": "Open",
+                "guidance": "Use the High 30-day window.",
+            }
+        )
+        self.assertIn("Draft a POA&M", question)
+        self.assertIn("Weak TLS cipher on web server", question)
+        self.assertIn("High", question)
+        self.assertIn("30", question)
+        self.assertIn("WebPortal", question)
+        self.assertIn("[ISSO Name]", question)
+        self.assertIn("ACAS/Nessus", question)
+        self.assertIn("2026-09-01", question)
+        self.assertIn("SC-8", question)
+        self.assertIn("[plugin ID if known]", question)
+        self.assertIn("Use the High 30-day window.", question)
+        self.assertIn("Do not invent plugin IDs", question)
+
+    def test_poam_question_requires_finding(self):
+        with self.assertRaises(countgpt.WorkbenchError):
+            countgpt.build_poam_question({"severity": "Low"})
+
+    def test_ssp_question_uses_placeholders_and_control_id(self):
+        question = countgpt.build_ssp_question(
+            {
+                "control_id": "AU-2",
+                "system_name": "",
+                "system_context": "DoD web application; SIEM not named.",
+            }
+        )
+        self.assertIn("AU-2", question)
+        self.assertIn("[System Name]", question)
+        self.assertIn("DoD web application", question)
+        self.assertIn("implementation statement", question.lower())
+        self.assertIn("Do not invent tools", question)
+
+    def test_ssp_question_requires_control_id(self):
+        with self.assertRaises(countgpt.WorkbenchError):
+            countgpt.build_ssp_question({"system_name": "WebPortal"})
+
+    def test_retrieval_query_prefers_control_and_finding(self):
+        poam_q = countgpt.workbench_retrieval_query(
+            "poam",
+            {"control_id": "AC-2", "finding": "stale local accounts"},
+        )
+        self.assertEqual(poam_q, "AC-2 stale local accounts")
+        ssp_q = countgpt.workbench_retrieval_query(
+            "ssp",
+            {"control_id": "IA-2", "system_context": "CAC MFA"},
+        )
+        self.assertEqual(ssp_q, "IA-2 CAC MFA")
+
+    def test_severity_timeline_normalization(self):
+        self.assertEqual(countgpt.severity_timeline_days("high"), 30)
+        self.assertEqual(countgpt.severity_timeline_days("medium"), 90)
+        self.assertEqual(countgpt.severity_timeline_days("Low"), 180)
+        self.assertEqual(countgpt.normalize_severity("mod"), "Moderate")
+
+    def test_workbench_turn_reuses_generate_answer(self):
+        matches = [
+            {
+                "id": "SC-8",
+                "title": "Transmission Confidentiality",
+                "text": "Protect transmitted information.",
+                "score": 1.0,
+                "source": "id:exact",
+            }
+        ]
+        captured = {}
+
+        def fake_generate(question, history, *, retrieve_query=None):
+            captured["question"] = question
+            captured["history"] = history
+            captured["retrieve_query"] = retrieve_query
+            return "Weakness: Weak TLS on WebPortal.", matches
+
+        with patch.object(countgpt, "generate_answer", side_effect=fake_generate):
+            result = countgpt.workbench_turn(
+                "poam",
+                {
+                    "finding": "Weak TLS cipher",
+                    "severity": "High",
+                    "system_name": "WebPortal",
+                    "control_id": "SC-8",
+                },
+            )
+        self.assertIn("Weak TLS", result["draft"])
+        self.assertEqual(result["meta"]["mode"], "poam")
+        self.assertEqual(result["meta"]["severity_timeline_days"], 30)
+        self.assertEqual(captured["retrieve_query"], "SC-8 Weak TLS cipher")
+        self.assertIn("Draft a POA&M", captured["question"])
+        self.assertEqual(result["matches"][0]["id"], "SC-8")
+
+    def test_export_markdown_includes_workbench_fields(self):
+        md = countgpt.build_export_markdown(
+            {
+                "question": "Draft a POA&M",
+                "answer": "Weakness: demo",
+                "drafting": True,
+                "mode": "poam",
+                "generated_at": "2026-01-01T00:00:00+00:00",
+                "fields": {"finding": "Weak TLS", "severity": "High"},
+                "matches": [],
+            }
+        )
+        self.assertIn("Workbench fields", md)
+        self.assertIn("finding: Weak TLS", md)
+        self.assertIn("poam", md)
+
+    def test_export_basename_ssp(self):
+        name = countgpt.export_basename(
+            {"mode": "ssp", "drafting": True},
+            when=__import__("datetime").datetime(2026, 1, 2, 3, 4, 5, tzinfo=__import__("datetime").timezone.utc),
+        )
+        self.assertTrue(name.startswith("countgpt-ssp-draft-"))
+
+
 if __name__ == "__main__":
     unittest.main()
