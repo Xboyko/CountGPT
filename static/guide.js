@@ -4,6 +4,8 @@
     search: document.getElementById("glossary-search"),
     status: document.getElementById("glossary-status"),
     list: document.getElementById("glossary-list"),
+    practiceStatus: document.getElementById("practice-status"),
+    practiceList: document.getElementById("practice-list"),
     tocLinks: [...document.querySelectorAll(".guide-toc nav a")],
     chapters: [...document.querySelectorAll(".guide-chapter")],
   };
@@ -105,6 +107,62 @@
     }
   }
 
+  function renderPracticeScenarios(items) {
+    if (!els.practiceList) return;
+    els.practiceList.replaceChildren();
+    const list = Array.isArray(items) ? items : [];
+    if (!list.length) {
+      if (els.practiceStatus) {
+        els.practiceStatus.hidden = false;
+        els.practiceStatus.textContent = "No practice scenarios are available.";
+      }
+      return;
+    }
+    if (els.practiceStatus) els.practiceStatus.hidden = true;
+    for (const item of list) {
+      const card = document.createElement("article");
+      card.className = "practice-card";
+      const mode = item.mode === "ssp" ? "SSP" : "POA&M";
+      const level = item.difficulty === "intermediate" ? "Intermediate" : "Intro";
+      const guideLink = item.guide
+        ? `<a href="${escapeHtml(item.guide)}">Guide chapter</a>`
+        : "";
+      const chatLink = item.chat_question
+        ? `<a href="/?q=${encodeURIComponent(item.chat_question)}">Ask in Chat</a>`
+        : "";
+      const extra = [guideLink, chatLink].filter(Boolean).join(" · ");
+      card.innerHTML = `
+        <p class="practice-flag"><strong>Practice / fictional</strong></p>
+        <h3>${escapeHtml(item.title || "")}</h3>
+        <p class="practice-meta">${escapeHtml(level)} · ${escapeHtml(mode)}</p>
+        <p>${escapeHtml(item.learning_goal || "")}</p>
+        <p class="practice-actions">
+          <a class="try-chat" href="/workbench?scenario=${encodeURIComponent(item.slug || "")}">Open in Workbench</a>
+          ${extra}
+        </p>
+      `;
+      els.practiceList.appendChild(card);
+    }
+  }
+
+  async function loadPracticeScenarios() {
+    if (!els.practiceList) return;
+    try {
+      const res = await fetch("/api/scenarios");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Scenarios failed to load");
+      renderPracticeScenarios(data.scenarios || []);
+    } catch (err) {
+      if (els.practiceStatus) {
+        els.practiceStatus.hidden = false;
+        els.practiceStatus.textContent =
+          err && err.message
+            ? err.message
+            : "Could not load practice scenarios.";
+      }
+    }
+  }
+
   async function loadGlossary() {
     try {
       const res = await fetch("/api/glossary");
@@ -159,6 +217,7 @@
   window.addEventListener("hashchange", setActiveToc);
 
   loadGlossary();
+  loadPracticeScenarios();
   refreshHealth();
   setActiveToc();
 })();

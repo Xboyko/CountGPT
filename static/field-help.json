@@ -1,0 +1,99 @@
+{
+  "poam": {
+    "finding": {
+      "title": "Finding / weakness",
+      "body": "This box is the plain-English description of what is wrong. Say what was seen and where it showed up — for example, a weak encryption setting on the public web server. Do not invent scanner numbers you do not have. A clear finding makes the rest of the form easier to fill.",
+      "guide": "/guide#ssp-vs-poam",
+      "glossary": "finding"
+    },
+    "severity": {
+      "title": "Severity",
+      "body": "Severity is a judgment about how much harm this problem could cause. A common practice clock is High in 30 days, Moderate in 90 days, and Low in 180 days, starting from the day it was found. Your organization may use different clocks. Pick the level that matches the evidence, not the level that is easiest to write.",
+      "guide": "/guide#severity-timelines",
+      "glossary": "severity"
+    },
+    "status": {
+      "title": "Status",
+      "body": "Status says where this item stands today: still open, waiting on something, delayed, closed, or marked as a false alarm or accepted leftover risk. Do not mark Closed just because a scan might be wrong — that needs written evidence. Pending is a safe choice while you are still checking.",
+      "guide": "/guide#ssp-vs-poam",
+      "glossary": "poam"
+    },
+    "system_name": {
+      "title": "System name",
+      "body": "This is the name of the system you are writing about — the same name used on other paperwork when you have one. Reviewers use it to match this item to the rest of the package. If you are practicing, a made-up name is fine. Leave it blank and the draft will keep a placeholder.",
+      "guide": "/guide#ssp-vs-poam"
+    },
+    "poc": {
+      "title": "POC / ISSO",
+      "body": "POC means point of contact — the person who tracks this item. On many teams that is the ISSO, the day-to-day security person for the system. Put a name if you know it. If you do not, leave it blank so the draft does not invent a person.",
+      "guide": "/guide#roles",
+      "glossary": "isso"
+    },
+    "detector_source": {
+      "title": "Detector source",
+      "body": "This is how the problem was found. ACAS is a Department of Defense scanning program (often a Nessus-style hole scan); a STIG is a setup checklist, which is a different kind of finding. Naming the source helps a reviewer trust the evidence. Do not mix the two or invent a scan ID.",
+      "guide": "/guide#acas-vs-stig",
+      "glossary": "acas"
+    },
+    "plugin_id": {
+      "title": "Plugin / finding ID",
+      "body": "This is the scanner’s finding number, if you have it. ACAS and Nessus results often include a plugin ID. If you do not have one, leave this blank. The draft should never make up an ID.",
+      "guide": "/guide#acas-vs-stig",
+      "glossary": "plugin-id"
+    },
+    "discovery_date": {
+      "title": "Discovery date",
+      "body": "This is the day the problem was first found. The usual 30/90/180-day fix clocks start here, not from today. If you do not know the date, leave it blank. The model is told not to invent dates.",
+      "guide": "/guide#severity-timelines",
+      "glossary": "severity"
+    },
+    "control_id": {
+      "title": "Control ID",
+      "body": "A control ID is the short code for a security rule in the NIST catalog, like SC-8 or AC-2. Filling one helps CountGPT look up the real rule text. If you are not sure which rule fits, leave it blank rather than guessing.",
+      "guide": "/guide#nist-800-53",
+      "glossary": "control"
+    },
+    "vendor_dependency": {
+      "title": "Vendor dependency",
+      "body": "Choose Yes if you cannot finish the fix yourself because you are waiting on a vendor — for example a patch that is not released yet. That does not close the item. It only explains why the clock may slip. Add a ticket number or expected date in vendor notes if you have one.",
+      "guide": "/guide#severity-timelines",
+      "glossary": "vendor-dependency"
+    },
+    "vendor_notes": {
+      "title": "Vendor notes",
+      "body": "Use this for the vendor ticket, expected patch date, or the product limit that blocks a full fix. Short facts are better than a long story. If there is no vendor wait, leave this blank.",
+      "guide": "/guide#severity-timelines",
+      "glossary": "vendor-dependency"
+    },
+    "guidance": {
+      "title": "Narrative guidance",
+      "body": "These are optional notes for the draft, such as a timeline hint from a template. You can edit or clear them. They steer the writing; they are not official policy.",
+      "guide": "/guide#how-countgpt-answers"
+    }
+  },
+  "ssp": {
+    "control_id": {
+      "title": "Control ID",
+      "body": "Name the one NIST rule this paragraph is about, such as IA-2 or AU-2. The workbench uses that ID to pull the real rule text. Keep it to one control so the statement stays focused and easier to test.",
+      "guide": "/guide#nist-800-53",
+      "glossary": "control"
+    },
+    "system_name": {
+      "title": "System name",
+      "body": "Use the same system name you would put on the rest of the plan. It ties this paragraph to the other pages in the package. A practice name is fine. Leave it blank for a placeholder.",
+      "guide": "/guide#ssp-vs-poam",
+      "glossary": "ssp"
+    },
+    "system_context": {
+      "title": "System context / implementation notes",
+      "body": "This is the “how we do it here” story: who uses the system, where it runs, and which tools you actually have. If you do not know a product name, say so or leave a placeholder. Do not copy the rule text — say what a reviewer could check on this system.",
+      "guide": "/guide#ssp-vs-poam",
+      "glossary": "ssp"
+    },
+    "guidance": {
+      "title": "Narrative guidance",
+      "body": "Optional extra instructions for the draft, such as “name the reviewer role and how long logs are kept.” Use it to remind yourself what a tester would look for. Leave it blank if the context box is enough.",
+      "guide": "/guide#how-countgpt-answers"
+    }
+  }
+}

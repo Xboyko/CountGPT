@@ -587,6 +587,190 @@ h1 {
   color: var(--muted);
 }
 
+.field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.field-label label {
+  color: inherit;
+}
+
+.field-help-btn {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.field-help-btn:hover,
+.field-help-btn[aria-expanded="true"] {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+.field-help-pop {
+  margin: 0 0 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0e151c;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.field-help-pop p {
+  margin: 0 0 8px;
+}
+
+.field-help-pop p:last-child {
+  margin-bottom: 0;
+}
+
+.field-help-pop strong {
+  color: var(--accent-strong);
+  font-weight: 550;
+}
+
+.field-help-links,
+.field-help-pop a,
+.scenario-links a,
+.practice-actions a:not(.try-chat) {
+  color: var(--accent-strong);
+}
+
+.scenario-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.scenario-banner,
+.good-looks {
+  border: 1px solid var(--amber-line);
+  border-radius: 12px;
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  padding: 10px 12px;
+}
+
+.scenario-banner p,
+.good-looks p {
+  margin: 0 0 6px;
+}
+
+.scenario-banner p:last-child,
+.good-looks p:last-child {
+  margin-bottom: 0;
+}
+
+.practice-flag {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.scenario-title {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 550;
+}
+
+.scenario-goal {
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.scenario-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.good-looks {
+  margin-top: 14px;
+}
+
+.good-looks summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 550;
+}
+
+.good-looks-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.good-looks-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.good-looks-item input {
+  margin-top: 3px;
+}
+
+.practice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 68ch;
+}
+
+.practice-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #10171f;
+}
+
+.practice-card h3 {
+  margin: 4px 0 6px;
+  font-size: 1rem;
+  font-weight: 550;
+  color: var(--text);
+}
+
+.practice-card p {
+  margin: 0 0 8px;
+}
+
+.practice-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
 .field input,
 .field select,
 .field textarea {

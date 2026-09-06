@@ -54,6 +54,21 @@
       <div class="workspace workbench-workspace">
         <main class="workbench-main">
           <section class="form-pane" aria-label="Workbench form">
+            <div class="scenario-picker">
+              <div class="field">
+                <span class="field-label" id="scenario-select-label">Load practice scenario</span>
+                <select id="scenario-select" aria-labelledby="scenario-select-label">
+                  <option value="">Choose a practice scenario…</option>
+                </select>
+              </div>
+              <div id="scenario-banner" class="scenario-banner hidden" role="status">
+                <p class="practice-flag"><strong>Practice / fictional</strong> — not a real system.</p>
+                <p id="scenario-title" class="scenario-title"></p>
+                <p id="scenario-goal" class="scenario-goal"></p>
+                <p id="scenario-links" class="scenario-links"></p>
+              </div>
+            </div>
+
             <div class="mode-tabs" role="tablist" aria-label="Draft type">
               <button type="button" class="tab active" role="tab" aria-selected="true" data-mode="poam" id="tab-poam">
                 POA&amp;M
@@ -66,7 +81,8 @@
             <form id="form-poam" class="wb-form">
               <p class="form-lead">
                 Fill what you know. Leave blanks — the draft keeps placeholders
-                instead of inventing scanner IDs or dates.
+                instead of inventing scanner IDs or dates. Use
+                <strong>Why?</strong> if a field is new to you.
               </p>
 
               <div class="preset-row" aria-label="Templates">
@@ -77,22 +93,31 @@
                 <button type="button" class="chip preset" data-preset="fp">False Positive / RA</button>
               </div>
 
-              <label class="field">
-                <span>Finding / weakness</span>
+              <div class="field">
+                <span class="field-label">
+                  <label for="poam-finding">Finding / weakness</label>
+                  <button type="button" class="field-help-btn" data-help="poam.finding" aria-label="Why this field?" title="Why this field?">?</button>
+                </span>
                 <textarea id="poam-finding" name="finding" rows="4" required placeholder="e.g. Weak cipher suite enabled on the public web server"></textarea>
-              </label>
+              </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>Severity</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-severity">Severity</label>
+                    <button type="button" class="field-help-btn" data-help="poam.severity" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <select id="poam-severity" name="severity">
                     <option value="High">High (30 days)</option>
                     <option value="Moderate" selected>Moderate (90 days)</option>
                     <option value="Low">Low (180 days)</option>
                   </select>
-                </label>
-                <label class="field">
-                  <span>Status</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-status">Status</label>
+                    <button type="button" class="field-help-btn" data-help="poam.status" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <select id="poam-status" name="status">
                     <option value="Open" selected>Open</option>
                     <option value="Pending">Pending</option>
@@ -101,23 +126,32 @@
                     <option value="False Positive">False Positive</option>
                     <option value="Closed">Closed</option>
                   </select>
-                </label>
+                </div>
               </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>System name</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-system">System name</label>
+                    <button type="button" class="field-help-btn" data-help="poam.system_name" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-system" name="system_name" type="text" placeholder="[System Name]" />
-                </label>
-                <label class="field">
-                  <span>POC / ISSO</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-poc">POC / ISSO</label>
+                    <button type="button" class="field-help-btn" data-help="poam.poc" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-poc" name="poc" type="text" placeholder="[ISSO Name]" />
-                </label>
+                </div>
               </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>Detector source</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-detector">Detector source</label>
+                    <button type="button" class="field-help-btn" data-help="poam.detector_source" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-detector" name="detector_source" type="text" list="detector-list" placeholder="ACAS/Nessus, STIG, 3PAO…" />
                   <datalist id="detector-list">
                     <option value="ACAS/Nessus"></option>
@@ -126,42 +160,60 @@
                     <option value="3PAO"></option>
                     <option value="Manual review"></option>
                   </datalist>
-                </label>
-                <label class="field">
-                  <span>Plugin / finding ID</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-plugin">Plugin / finding ID</label>
+                    <button type="button" class="field-help-btn" data-help="poam.plugin_id" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-plugin" name="plugin_id" type="text" placeholder="Leave blank if unknown" />
-                </label>
+                </div>
               </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>Discovery date</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-date">Discovery date</label>
+                    <button type="button" class="field-help-btn" data-help="poam.discovery_date" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-date" name="discovery_date" type="date" />
-                </label>
-                <label class="field">
-                  <span>Control ID (optional)</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-control">Control ID (optional)</label>
+                    <button type="button" class="field-help-btn" data-help="poam.control_id" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-control" name="control_id" type="text" placeholder="e.g. AC-2" />
-                </label>
+                </div>
               </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>Vendor dependency</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-vendor">Vendor dependency</label>
+                    <button type="button" class="field-help-btn" data-help="poam.vendor_dependency" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <select id="poam-vendor" name="vendor_dependency">
                     <option value="no" selected>No</option>
                     <option value="yes">Yes</option>
                   </select>
-                </label>
-                <label class="field">
-                  <span>Vendor notes</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="poam-vendor-notes">Vendor notes</label>
+                    <button type="button" class="field-help-btn" data-help="poam.vendor_notes" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="poam-vendor-notes" name="vendor_notes" type="text" placeholder="Patch ETA, ticket, constraint…" />
-                </label>
+                </div>
               </div>
 
-              <label class="field">
-                <span>Narrative guidance (templates fill this; still editable)</span>
+              <div class="field">
+                <span class="field-label">
+                  <label for="poam-guidance">Narrative guidance (templates fill this; still editable)</label>
+                  <button type="button" class="field-help-btn" data-help="poam.guidance" aria-label="Why this field?" title="Why this field?">?</button>
+                </span>
                 <textarea id="poam-guidance" name="guidance" rows="3" placeholder="Optional analyst notes or template text"></textarea>
-              </label>
+              </div>
 
               <div class="form-actions">
                 <button type="submit" id="btn-generate-poam" class="btn primary">Generate</button>
@@ -184,30 +236,42 @@
               </div>
 
               <div class="field-grid">
-                <label class="field">
-                  <span>Control ID</span>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="ssp-control">Control ID</label>
+                    <button type="button" class="field-help-btn" data-help="ssp.control_id" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="ssp-control" name="control_id" type="text" required placeholder="e.g. AU-2" />
-                </label>
-                <label class="field">
-                  <span>System name</span>
+                </div>
+                <div class="field">
+                  <span class="field-label">
+                    <label for="ssp-system">System name</label>
+                    <button type="button" class="field-help-btn" data-help="ssp.system_name" aria-label="Why this field?" title="Why this field?">?</button>
+                  </span>
                   <input id="ssp-system" name="system_name" type="text" placeholder="[System Name]" />
-                </label>
+                </div>
               </div>
 
-              <label class="field">
-                <span>System context</span>
+              <div class="field">
+                <span class="field-label">
+                  <label for="ssp-context">System context / implementation notes</label>
+                  <button type="button" class="field-help-btn" data-help="ssp.system_context" aria-label="Why this field?" title="Why this field?">?</button>
+                </span>
                 <textarea
                   id="ssp-context"
                   name="system_context"
                   rows="6"
                   placeholder="Environment (on-prem, cloud, DoD), users, known implementing mechanisms. Leave tools unnamed if you are not sure."
                 ></textarea>
-              </label>
+              </div>
 
-              <label class="field">
-                <span>Narrative guidance (optional)</span>
+              <div class="field">
+                <span class="field-label">
+                  <label for="ssp-guidance">Narrative guidance (optional)</label>
+                  <button type="button" class="field-help-btn" data-help="ssp.guidance" aria-label="Why this field?" title="Why this field?">?</button>
+                </span>
                 <textarea id="ssp-guidance" name="guidance" rows="3" placeholder="Assessor-testable details you want in the statement"></textarea>
-              </label>
+              </div>
 
               <div class="form-actions">
                 <button type="submit" id="btn-generate-ssp" class="btn primary">Generate</button>
@@ -231,6 +295,11 @@
             <div id="draft-output" class="draft-output hidden">
               <div class="md"></div>
             </div>
+            <details id="good-looks" class="good-looks hidden">
+              <summary>What good looks like</summary>
+              <p class="practice-flag">Compare your draft to this checklist. <strong>Practice / fictional.</strong></p>
+              <ul id="good-looks-list" class="good-looks-list"></ul>
+            </details>
           </section>
         </main>
 

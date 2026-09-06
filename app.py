@@ -235,6 +235,35 @@ def guide_meta():
     return data
 
 
+@app.get("/api/field-help")
+def field_help():
+    data = _load_static_json("field-help.json")
+    if not isinstance(data.get("poam"), dict) or not isinstance(data.get("ssp"), dict):
+        raise HTTPException(status_code=500, detail="field-help must include poam and ssp objects")
+    return data
+
+
+@app.get("/api/scenarios")
+def scenarios():
+    data = _load_static_json("scenarios.json")
+    items = data.get("scenarios")
+    if not isinstance(items, list):
+        raise HTTPException(status_code=500, detail="scenarios list is missing")
+    return data
+
+
+@app.get("/api/scenarios/{slug}")
+def scenario_one(slug: str):
+    data = _load_static_json("scenarios.json")
+    items = data.get("scenarios")
+    if not isinstance(items, list):
+        raise HTTPException(status_code=500, detail="scenarios list is missing")
+    for item in items:
+        if isinstance(item, dict) and item.get("slug") == slug:
+            return item
+    raise HTTPException(status_code=404, detail="Unknown practice scenario")
+
+
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
