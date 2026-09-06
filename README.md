@@ -42,6 +42,8 @@ uvicorn app:app --reload --host 0.0.0.0 --port 7860
 
 Open [http://127.0.0.1:7860](http://127.0.0.1:7860). The site is a ChatGPT-style page: chat transcript, retrieved NIST control sources (desktop sidebar, collapsible on mobile), a persistent **draft / not assessor-validated** banner, and Markdown/CSV export of the last answer plus sources.
 
+The **Workbench** at [http://127.0.0.1:7860/workbench](http://127.0.0.1:7860/workbench) is a structured POA\&M / SSP form (Chat | Workbench in the header). Example POA\&M fields: finding text, High/Moderate/Low (30/90/180-day timelines), system name, POC/ISSO, detector source (e.g. ACAS/Nessus), discovery date, optional control ID (`AC-2`), vendor dependency, and status. Templates prefill High/Moderate/Low or a False Positive / Risk Adjustment starter. SSP mode takes a control ID plus system context and drafts an implementation statement with placeholders. Generate uses the same NIST retrieval + drafting prompts as chat; export downloads the current draft, sources, and disclaimer as Markdown or CSV. The model is instructed not to invent plugin IDs, dates, or tools you did not provide.
+
 ### Ollama host (WSL / remote)
 
 The app talks to Ollama at `OLLAMA_HOST` (default `http://127.0.0.1:11434`). If you run CountGPT in WSL and Ollama on Windows, point it at the Windows host IP:
@@ -93,7 +95,7 @@ Python 3.12, sentence-transformers (`all-MiniLM-L6-v2` embeddings), custom NumPy
 
 ### 1. RAG pipeline
 
-I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. The HTML UI shows a persistent draft disclaimer, a sources side panel (control IDs, similarity scores, titles/text), and Markdown/CSV export of the last answer plus retrieved controls.
+I download the real, official NIST 800-53 Rev 5 control catalog (public NIST/OSCAL source), which is about 1,196 controls and enhancements. Then a custom recursive parser can extract clean control text from the deeply nested source data. Then I generate 384 dimension semantic embeddings for every control. For retrieval, it converts a plain English question into an embedding, compares it against all the stored control embeddings, and returns the top matches (plus exact ID hits when the user names a control). Those retrieved controls get passed as grounded context to a locally running Llama 3.1 8B model, which generates a cited, fact grounded answer. The HTML UI shows a persistent draft disclaimer, a sources side panel (control IDs, similarity scores, titles/text), Markdown/CSV export of the last answer plus retrieved controls, and a `/workbench` page for structured POA\&M and SSP drafts (`POST /api/poam`, `POST /api/ssp`).
 
 ### 2. Fine tuning pipeline (QLoRA on Llama 3.1 8B)
 

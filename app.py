@@ -59,9 +59,40 @@ class ChatResponse(BaseModel):
 class ExportRequest(BaseModel):
     question: str = ""
     answer: str = ""
+    draft: str = ""
     matches: list[dict] = Field(default_factory=list)
     drafting: bool = False
+    mode: str = ""
+    fields: dict = Field(default_factory=dict)
     format: str = "md"
+
+
+class PoamRequest(BaseModel):
+    finding: str
+    severity: str = "Moderate"
+    system_name: str = ""
+    poc: str = ""
+    detector_source: str = ""
+    plugin_id: str = ""
+    discovery_date: str = ""
+    control_id: str = ""
+    vendor_dependency: str = "no"
+    vendor_notes: str = ""
+    status: str = "Open"
+    guidance: str = ""
+
+
+class SspRequest(BaseModel):
+    control_id: str
+    system_name: str = ""
+    system_context: str = ""
+    guidance: str = ""
+
+
+class WorkbenchResponse(BaseModel):
+    draft: str
+    matches: list[MatchOut]
+    meta: dict
 
 
 @app.get("/api/health")
@@ -86,18 +117,46 @@ def chat(req: ChatRequest) -> ChatResponse:
     )
 
 
+def _workbench_response(mode: str, fields: dict) -> WorkbenchResponse:
+    try:
+        result = countgpt.workbench_turn(mode, fields)
+    except countgpt.WorkbenchError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except countgpt.OllamaError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return WorkbenchResponse(
+        draft=result["draft"],
+        matches=[MatchOut(**m) for m in result["matches"]],
+        meta=result["meta"],
+    )
+
+
+@app.post("/api/poam", response_model=WorkbenchResponse)
+def poam_draft(req: PoamRequest) -> WorkbenchResponse:
+    return _workbench_response("poam", req.model_dump())
+
+
+@app.post("/api/ssp", response_model=WorkbenchResponse)
+def ssp_draft(req: SspRequest) -> WorkbenchResponse:
+    return _workbench_response("ssp", req.model_dump())
+
+
 @app.post("/api/export")
 def export_last_turn(req: ExportRequest):
-    if not (req.answer or "").strip():
+    answer = (req.answer or req.draft or "").strip()
+    if not answer:
         raise HTTPException(status_code=400, detail="Nothing to export yet.")
     fmt = (req.format or "md").strip().lower()
     if fmt not in {"md", "markdown", "csv"}:
         raise HTTPException(status_code=400, detail="format must be md or csv")
     state = {
         "question": req.question,
-        "answer": req.answer,
+        "answer": answer,
+        "draft": answer,
         "matches": req.matches,
-        "drafting": req.drafting,
+        "drafting": req.drafting or (req.mode in {"poam", "ssp"}),
+        "mode": req.mode,
+        "fields": req.fields,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
     basename = countgpt.export_basename(state)
@@ -124,6 +183,14 @@ def index():
     if not index_path.is_file():
         raise HTTPException(status_code=500, detail="static/index.html is missing")
     return FileResponse(index_path)
+
+
+@app.get("/workbench")
+def workbench():
+    page = STATIC_DIR / "workbench.html"
+    if not page.is_file():
+        raise HTTPException(status_code=500, detail="static/workbench.html is missing")
+    return FileResponse(page)
 
 
 if STATIC_DIR.is_dir():

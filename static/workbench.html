@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CountGPT Workbench</title>
+    <meta
+      name="description"
+      content="POA&amp;M and SSP implementation-statement workbench for CountGPT."
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="28" height="28">
+              <rect x="3" y="4" width="26" height="24" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10 12h12M10 16.5h8M10 21h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div>
+            <h1>CountGPT</h1>
+            <p class="subtitle">POA&amp;M and SSP implementation workbench</p>
+          </div>
+        </div>
+        <nav class="shell-nav" aria-label="Primary">
+          <a href="/" class="nav-link">Chat</a>
+          <a href="/workbench" class="nav-link active" aria-current="page">Workbench</a>
+        </nav>
+        <div class="top-actions">
+          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+          <button type="button" id="btn-sources" class="btn ghost sources-toggle">Sources</button>
+          <button type="button" id="btn-export-md" class="btn ghost" disabled>Export MD</button>
+          <button type="button" id="btn-export-csv" class="btn ghost" disabled>Export CSV</button>
+        </div>
+      </header>
+
+      <div class="disclaimer" role="note">
+        <strong>Draft / not assessor-validated.</strong>
+        For learning and analyst assistance only — not an ATO or eMASS artifact.
+        Have a qualified assessor review before use. The model will not invent
+        plugin IDs, dates, or tools you did not provide.
+      </div>
+
+      <div class="workspace workbench-workspace">
+        <main class="workbench-main">
+          <section class="form-pane" aria-label="Workbench form">
+            <div class="mode-tabs" role="tablist" aria-label="Draft type">
+              <button type="button" class="tab active" role="tab" aria-selected="true" data-mode="poam" id="tab-poam">
+                POA&amp;M
+              </button>
+              <button type="button" class="tab" role="tab" aria-selected="false" data-mode="ssp" id="tab-ssp">
+                SSP statement
+              </button>
+            </div>
+
+            <form id="form-poam" class="wb-form">
+              <p class="form-lead">
+                Fill what you know. Leave blanks — the draft keeps placeholders
+                instead of inventing scanner IDs or dates.
+              </p>
+
+              <div class="preset-row" aria-label="Templates">
+                <span class="preset-label">Templates</span>
+                <button type="button" class="chip preset" data-preset="high">High · 30d</button>
+                <button type="button" class="chip preset" data-preset="moderate">Moderate · 90d</button>
+                <button type="button" class="chip preset" data-preset="low">Low · 180d</button>
+                <button type="button" class="chip preset" data-preset="fp">False Positive / RA</button>
+              </div>
+
+              <label class="field">
+                <span>Finding / weakness</span>
+                <textarea id="poam-finding" name="finding" rows="4" required placeholder="e.g. Weak cipher suite enabled on the public web server"></textarea>
+              </label>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Severity</span>
+                  <select id="poam-severity" name="severity">
+                    <option value="High">High (30 days)</option>
+                    <option value="Moderate" selected>Moderate (90 days)</option>
+                    <option value="Low">Low (180 days)</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Status</span>
+                  <select id="poam-status" name="status">
+                    <option value="Open" selected>Open</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Risk Accepted">Risk Accepted</option>
+                    <option value="False Positive">False Positive</option>
+                    <option value="Closed">Closed</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>System name</span>
+                  <input id="poam-system" name="system_name" type="text" placeholder="[System Name]" />
+                </label>
+                <label class="field">
+                  <span>POC / ISSO</span>
+                  <input id="poam-poc" name="poc" type="text" placeholder="[ISSO Name]" />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Detector source</span>
+                  <input id="poam-detector" name="detector_source" type="text" list="detector-list" placeholder="ACAS/Nessus, STIG, 3PAO…" />
+                  <datalist id="detector-list">
+                    <option value="ACAS/Nessus"></option>
+                    <option value="Nessus"></option>
+                    <option value="STIG"></option>
+                    <option value="3PAO"></option>
+                    <option value="Manual review"></option>
+                  </datalist>
+                </label>
+                <label class="field">
+                  <span>Plugin / finding ID</span>
+                  <input id="poam-plugin" name="plugin_id" type="text" placeholder="Leave blank if unknown" />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Discovery date</span>
+                  <input id="poam-date" name="discovery_date" type="date" />
+                </label>
+                <label class="field">
+                  <span>Control ID (optional)</span>
+                  <input id="poam-control" name="control_id" type="text" placeholder="e.g. AC-2" />
+                </label>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Vendor dependency</span>
+                  <select id="poam-vendor" name="vendor_dependency">
+                    <option value="no" selected>No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Vendor notes</span>
+                  <input id="poam-vendor-notes" name="vendor_notes" type="text" placeholder="Patch ETA, ticket, constraint…" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Narrative guidance (templates fill this; still editable)</span>
+                <textarea id="poam-guidance" name="guidance" rows="3" placeholder="Optional analyst notes or template text"></textarea>
+              </label>
+
+              <div class="form-actions">
+                <button type="submit" id="btn-generate-poam" class="btn primary">Generate</button>
+                <button type="reset" class="btn ghost" id="btn-reset-poam">Clear form</button>
+              </div>
+            </form>
+
+            <form id="form-ssp" class="wb-form hidden">
+              <p class="form-lead">
+                Enter a NIST control ID and whatever system context you have.
+                Unnamed tools stay as placeholders.
+              </p>
+
+              <div class="preset-row" aria-label="SSP starters">
+                <span class="preset-label">Starters</span>
+                <button type="button" class="chip preset" data-ssp="AU-2">AU-2 logging</button>
+                <button type="button" class="chip preset" data-ssp="IA-2">IA-2 MFA</button>
+                <button type="button" class="chip preset" data-ssp="RA-5">RA-5 scanning</button>
+                <button type="button" class="chip preset" data-ssp="SC-7">SC-7 boundary</button>
+              </div>
+
+              <div class="field-grid">
+                <label class="field">
+                  <span>Control ID</span>
+                  <input id="ssp-control" name="control_id" type="text" required placeholder="e.g. AU-2" />
+                </label>
+                <label class="field">
+                  <span>System name</span>
+                  <input id="ssp-system" name="system_name" type="text" placeholder="[System Name]" />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>System context</span>
+                <textarea
+                  id="ssp-context"
+                  name="system_context"
+                  rows="6"
+                  placeholder="Environment (on-prem, cloud, DoD), users, known implementing mechanisms. Leave tools unnamed if you are not sure."
+                ></textarea>
+              </label>
+
+              <label class="field">
+                <span>Narrative guidance (optional)</span>
+                <textarea id="ssp-guidance" name="guidance" rows="3" placeholder="Assessor-testable details you want in the statement"></textarea>
+              </label>
+
+              <div class="form-actions">
+                <button type="submit" id="btn-generate-ssp" class="btn primary">Generate</button>
+                <button type="reset" class="btn ghost" id="btn-reset-ssp">Clear form</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="draft-pane" aria-label="Generated draft">
+            <div class="draft-head">
+              <h2>Draft</h2>
+              <span id="draft-meta" class="mode-tag hidden"></span>
+            </div>
+            <div id="draft-empty" class="empty-state draft-empty">
+              <h2>No draft yet</h2>
+              <p>
+                Generate a POA&amp;M from a finding, or switch to SSP statement
+                and name a control ID. Retrieved NIST sources appear on the right.
+              </p>
+            </div>
+            <div id="draft-output" class="draft-output hidden">
+              <div class="md"></div>
+            </div>
+          </section>
+        </main>
+
+        <aside id="sources-panel" class="sources-pane" aria-label="Retrieved controls">
+          <div class="sources-head">
+            <h2>Sources</h2>
+            <span id="sources-mode" class="mode-tag hidden"></span>
+            <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">×</button>
+          </div>
+          <p id="sources-empty" class="sources-empty">
+            No retrieval yet. Add a control ID or finding text, then generate.
+          </p>
+          <div id="sources-list" class="sources-list" hidden></div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="sources-backdrop" class="backdrop" hidden></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+    <script src="/static/workbench.js"></script>
+  </body>
+</html>

@@ -56,6 +56,37 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.shell-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #0e151c;
+}
+
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+.nav-link.active {
+  color: #e8f4f3;
+  background: #244048;
+}
+
+.empty-state a {
+  color: var(--accent-strong);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -472,8 +503,212 @@ h1 {
   border: 0;
 }
 
+.workbench-main {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  background: var(--bg-chat);
+}
+
+.form-pane,
+.draft-pane {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.form-pane {
+  border-right: 1px solid var(--line);
+  padding: 16px 16px 20px;
+  background: #10171f;
+}
+
+.draft-pane {
+  padding: 16px 18px 20px;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  font: inherit;
+  font-size: 0.86rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: #e8f4f3;
+  background: #244048;
+  border-color: #3b6a72;
+}
+
+.form-lead {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.preset-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.wb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.4;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.field input[type="date"] {
+  color-scheme: dark;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.draft-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.draft-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.draft-output {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-assistant);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.draft-output .md.error {
+  color: #f0c8c8;
+}
+
+.draft-output .md > *:first-child {
+  margin-top: 0;
+}
+
+.draft-output .md > *:last-child {
+  margin-bottom: 0;
+}
+
+.draft-output .md p,
+.draft-output .md ul,
+.draft-output .md ol {
+  margin: 0.45em 0;
+}
+
+.draft-output .md pre {
+  overflow-x: auto;
+  background: #0b1016;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.draft-output .md code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+}
+
+.draft-output .md table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.draft-output .md th,
+.draft-output .md td {
+  border: 1px solid var(--line);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+@media (max-width: 1100px) {
+  .workbench-main {
+    grid-template-columns: 1fr;
+  }
+
+  .form-pane {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    max-height: none;
+  }
+}
+
 @media (max-width: 880px) {
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid {
     grid-template-columns: 1fr;
   }
 
@@ -513,5 +748,9 @@ h1 {
 
   .top-actions {
     justify-content: flex-start;
+  }
+
+  .shell-nav {
+    align-self: flex-start;
   }
 }

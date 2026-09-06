@@ -53,7 +53,7 @@
     wrap.className = "empty-state";
     wrap.innerHTML = `
       <h2>Ask a control question or request a draft</h2>
-      <p>Answers are grounded in retrieved NIST SP 800-53 controls. Cite IDs stay on the right.</p>
+      <p>Answers are grounded in retrieved NIST SP 800-53 controls. Cite IDs stay on the right. For a structured POA&amp;M or SSP draft, open the <a href="/workbench">workbench</a>.</p>
     `;
     const row = document.createElement("div");
     row.className = "examples";
