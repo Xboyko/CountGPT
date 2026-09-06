@@ -90,11 +90,14 @@
   }
 
   function setActiveToc() {
-    const offset = 96;
+    const marker = 140;
     let current = els.chapters[0];
     for (const chapter of els.chapters) {
-      const top = chapter.getBoundingClientRect().top;
-      if (top - offset <= 0) current = chapter;
+      const rect = chapter.getBoundingClientRect();
+      if (rect.top <= marker && rect.bottom > marker) {
+        current = chapter;
+        break;
+      }
     }
     const id = current ? `#${current.id}` : "";
     for (const link of els.tocLinks) {
