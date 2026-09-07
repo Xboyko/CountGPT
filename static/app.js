@@ -17,6 +17,7 @@
     exportCsv: document.getElementById("btn-export-csv"),
     sourcesList: document.getElementById("sources-list"),
     sourcesEmpty: document.getElementById("sources-empty"),
+    sourcesStatus: document.getElementById("sources-status"),
     sourcesMode: document.getElementById("sources-mode"),
     sourcesPanel: document.getElementById("sources-panel"),
     sourcesBackdrop: document.getElementById("sources-backdrop"),
@@ -87,6 +88,13 @@
       bubble.className = `bubble ${msg.role}${msg.error ? " error" : ""}`;
       if (msg.role === "assistant") {
         bubble.innerHTML = `<div class="md">${renderMarkdown(msg.content)}</div>`;
+        const md = bubble.querySelector(".md");
+        if (md && msg.matches && window.CountGPTSources) {
+          window.CountGPTSources.decorateCitations(md, msg.matches, (id) => {
+            toggleSources(true);
+            window.CountGPTSources.highlightSource(els.sourcesList, id);
+          });
+        }
       } else {
         bubble.textContent = msg.content;
       }
@@ -110,36 +118,21 @@
     document.getElementById("typing-row")?.remove();
   }
 
-  function renderSources(matches, drafting, explain) {
-    const list = matches || [];
-    if (!list.length) {
-      els.sourcesList.hidden = true;
-      els.sourcesList.replaceChildren();
-      els.sourcesEmpty.hidden = false;
-      els.sourcesMode.classList.add("hidden");
+  function renderSources(matches, drafting, explain, retrieval) {
+    const info = retrieval || {};
+    const modeLabel = drafting ? "drafting" : explain ? "explain" : "lookup";
+    if (window.CountGPTSources) {
+      window.CountGPTSources.renderSources(els, matches, {
+        afterTurn: Boolean(state.lastTurn),
+        explain,
+        modeLabel,
+        retrievalStatus: info.status,
+        retrievalNote: info.note,
+      });
       return;
     }
-    els.sourcesEmpty.hidden = true;
-    els.sourcesList.hidden = false;
-    els.sourcesMode.classList.remove("hidden");
-    els.sourcesMode.textContent = drafting ? "drafting" : explain ? "explain" : "lookup";
-    els.sourcesList.replaceChildren();
-    for (const match of list) {
-      const card = document.createElement("article");
-      card.className = "source-card";
-      const text = (match.text || "").trim();
-      const clipped = text.length > 420 ? `${text.slice(0, 420).trim()}…` : text;
-      card.innerHTML = `
-        <div class="source-meta">
-          <span class="source-id">${escapeHtml(match.id || "")}</span>
-          <span class="source-score">${Number(match.score || 0).toFixed(2)}</span>
-          <span class="source-kind">${escapeHtml(match.source || "")}</span>
-        </div>
-        <p class="source-title">${escapeHtml(match.title || "")}</p>
-        <p class="source-text">${escapeHtml(clipped || "No statement text.")}</p>
-      `;
-      els.sourcesList.appendChild(card);
-    }
+    els.sourcesEmpty.hidden = Boolean(matches && matches.length);
+    els.sourcesList.hidden = !els.sourcesEmpty.hidden;
   }
 
   function escapeHtml(value) {
@@ -183,15 +176,24 @@
         const detail = data.detail || res.statusText || "Request failed";
         throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
       }
-      state.history.push({ role: "assistant", content: data.answer || "" });
+      state.history.push({
+        role: "assistant",
+        content: data.answer || "",
+        matches: data.matches || [],
+      });
       state.lastTurn = {
         question: message,
         answer: data.answer || "",
         matches: data.matches || [],
         drafting: Boolean(data.drafting),
         explain: Boolean(data.explain),
+        retrieval_status: data.retrieval_status || "",
+        retrieval_note: data.retrieval_note || "",
       };
-      renderSources(data.matches, data.drafting, data.explain);
+      renderSources(data.matches, data.drafting, data.explain, {
+        status: data.retrieval_status,
+        note: data.retrieval_note,
+      });
       setExportEnabled(Boolean((data.answer || "").trim()));
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
@@ -213,7 +215,7 @@
     state.history = [];
     state.lastTurn = null;
     renderMessages();
-    renderSources([], false, false);
+    renderSources([], false, false, {});
     setExportEnabled(false);
     els.input.focus();
   }

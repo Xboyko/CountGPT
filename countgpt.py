@@ -90,6 +90,15 @@ EMPTY_RETRIEVAL_MD = (
     "_No retrieval yet. Ask a question or name a control ID (for example `AC-2`)._"
 )
 
+WEAK_RETRIEVAL_NOTE = (
+    "No confident NIST 800-53 match. Nothing met the similarity floor, so no "
+    "control citations were invented. Name a control ID (for example AC-2) or "
+    "rephrase the question."
+)
+
+SNIPPET_CHARS = 280
+WEAK_SEMANTIC_SCORE = 0.50
+
 STORE_OK = False
 STORE_ERROR: str | None = None
 
@@ -137,10 +146,13 @@ def dry_run_answer(question: str, matches: list) -> str:
                 "This looks like a learning question rather than a named control. "
                 "In a full run I would explain the term in plain English and would "
                 "not invent organization policy or control IDs. "
+                f"No confident NIST catalog match — citations were not invented. "
                 f"({DISCLAIMER_TITLE}.)"
             )
         return (
-            "I could not find a confident NIST 800-53 match for this question. "
+            "I could not find a confident NIST 800-53 match for this question "
+            "(retrieval was empty or below the similarity floor). "
+            "No control citations were invented. "
             "Name a control ID (for example AC-2) or rephrase. "
             f"({DISCLAIMER_TITLE}.)"
         )
@@ -372,14 +384,13 @@ def format_matches_markdown(matches: list) -> str:
         source = (m.get("source") or "").replace("|", "\\|")
         score = f"{float(m.get('score') or 0):.2f}"
         lines.append(f"| `{cid}` | {score} | {source} | {title} |")
-    lines.extend(["", "### Control text", ""])
+    lines.extend(["", "### Control quotes", ""])
     for m in matches:
-        text = (m.get("text") or "").strip()
-        if len(text) > 500:
-            text = text[:500].rstrip() + "…"
-        lines.append(f"**`{m.get('id', '')}` — {m.get('title', '')}**")
+        snippet = (m.get("snippet") or control_snippet(m.get("text") or "")).strip()
+        used = " · used in answer" if m.get("used_in_answer") else ""
+        lines.append(f"**`{m.get('id', '')}` — {m.get('title', '')}**{used}")
         lines.append("")
-        lines.append(text or "_No statement text._")
+        lines.append(f"> {snippet or '_No statement text._'}")
         lines.append("")
     return "\n".join(lines)
 
@@ -398,13 +409,72 @@ def matches_to_rows(matches: list) -> list[list]:
     return rows
 
 
+def control_snippet(text: str, limit: int = SNIPPET_CHARS) -> str:
+    """Short quote of control text for the sources panel and exports."""
+    cleaned = " ".join((text or "").split())
+    if not cleaned:
+        return ""
+    if len(cleaned) <= limit:
+        return cleaned
+    clipped = cleaned[:limit].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return clipped + "…"
+
+
+def answer_cites_control(answer: str, control_id: str) -> bool:
+    """True when the draft/answer mentions this retrieved control ID."""
+    if not answer or not control_id:
+        return False
+    cited = set(retrieve.extract_control_ids(answer))
+    canon = retrieve.canonicalize_control_id(control_id)
+    if canon and canon in cited:
+        return True
+    raw = re.escape(str(control_id).strip())
+    return bool(raw and re.search(rf"\b{raw}\b", answer, re.IGNORECASE))
+
+
+def annotate_matches(matches: list, answer: str = "") -> list[dict[str, Any]]:
+    """Add snippet + used_in_answer while keeping the existing match fields."""
+    out = []
+    for match in matches or []:
+        row = serialize_match(match)
+        row["used_in_answer"] = answer_cites_control(answer, row.get("id", ""))
+        out.append(row)
+    return out
+
+
+def retrieval_status(matches: list) -> str:
+    """ok | weak | empty — honest grounding label for UI and exports."""
+    if not matches:
+        return "empty"
+    has_id = any(str(m.get("source") or "").startswith("id:") for m in matches)
+    top = max(float(m.get("score") or 0) for m in matches)
+    if not has_id and top < WEAK_SEMANTIC_SCORE:
+        return "weak"
+    return "ok"
+
+
+def retrieval_note(status: str) -> str:
+    if status == "empty":
+        return WEAK_RETRIEVAL_NOTE
+    if status == "weak":
+        return (
+            "Only low-confidence semantic matches were found (no exact control ID "
+            f"and top score below {WEAK_SEMANTIC_SCORE:.2f}). Treat citations as "
+            "tentative — this is not a confident catalog hit."
+        )
+    return ""
+
+
 def serialize_match(match: dict) -> dict[str, Any]:
+    text = match.get("text", "") or ""
     return {
         "id": match.get("id", ""),
         "title": match.get("title", ""),
-        "text": match.get("text", ""),
+        "text": text,
+        "snippet": match.get("snippet") or control_snippet(text),
         "score": float(match.get("score") or 0),
         "source": match.get("source", ""),
+        "used_in_answer": bool(match.get("used_in_answer", False)),
     }
 
 
@@ -460,11 +530,15 @@ def chat_turn(message: str, history=None) -> dict[str, Any]:
     drafting = is_drafting_task(message)
     explain = is_explain_task(message)
     answer, matches = generate_answer(message, history)
+    annotated = annotate_matches(matches, answer)
+    status = retrieval_status(annotated)
     return {
         "answer": answer,
-        "matches": [serialize_match(m) for m in matches],
+        "matches": annotated,
         "drafting": drafting,
         "explain": explain,
+        "retrieval_status": status,
+        "retrieval_note": retrieval_note(status),
         "question": message,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -687,9 +761,13 @@ def workbench_turn(mode: str, fields: dict | None = None) -> dict[str, Any]:
         question, history=[], retrieve_query=retrieve_query or None
     )
     generated_at = datetime.now(timezone.utc).isoformat()
+    annotated = annotate_matches(matches, answer)
+    status = retrieval_status(annotated)
     return {
         "draft": answer,
-        "matches": [serialize_match(m) for m in matches],
+        "matches": annotated,
+        "retrieval_status": status,
+        "retrieval_note": retrieval_note(status),
         "meta": {
             "mode": mode,
             "drafting": True,
@@ -701,6 +779,8 @@ def workbench_turn(mode: str, fields: dict | None = None) -> dict[str, Any]:
             "disclaimer": DISCLAIMER_SHORT,
             "model": OLLAMA_MODEL,
             "dry_run": dry_run_enabled(),
+            "retrieval_status": status,
+            "retrieval_note": retrieval_note(status),
         },
         "answer": answer,
         "question": question,
@@ -762,24 +842,45 @@ def build_export_markdown(state: dict) -> str:
             "",
         ]
     )
+    status = state.get("retrieval_status") or retrieval_status(matches)
+    note = state.get("retrieval_note") or retrieval_note(status)
+    lines.extend(
+        [
+            f"- Retrieval: `{status}`",
+            "",
+        ]
+    )
+    if note:
+        lines.extend([note, ""])
     if not matches:
-        lines.append("_No controls retrieved._")
+        lines.append(
+            "_No confident NIST 800-53 match. Citations were not invented._"
+        )
     else:
         lines.extend(
             [
-                "| ID | Score | Source | Title |",
-                "| --- | --- | --- | --- |",
+                "| ID | Score | Source | Used | Title | Snippet |",
+                "| --- | --- | --- | --- | --- | --- |",
             ]
         )
         for m in matches:
+            snippet = (m.get("snippet") or control_snippet(m.get("text") or "")).replace(
+                "|", "\\|"
+            )
+            used = "yes" if m.get("used_in_answer") else "no"
             lines.append(
                 f"| {m.get('id', '')} | {float(m.get('score') or 0):.4f} | "
-                f"{m.get('source', '')} | {m.get('title', '')} |"
+                f"{m.get('source', '')} | {used} | {m.get('title', '')} | {snippet} |"
             )
         lines.append("")
         for m in matches:
-            lines.append(f"### {m.get('id', '')} — {m.get('title', '')}")
+            snippet = m.get("snippet") or control_snippet(m.get("text") or "")
+            used = "used in answer" if m.get("used_in_answer") else "retrieved"
+            lines.append(f"### {m.get('id', '')} — {m.get('title', '')} ({used})")
             lines.append("")
+            if snippet:
+                lines.append(f"> {snippet}")
+                lines.append("")
             lines.append(m.get("text") or "")
             lines.append("")
     return "\n".join(lines)
@@ -795,14 +896,19 @@ def build_export_csv(state: dict) -> str:
             "score",
             "source",
             "title",
+            "snippet",
+            "used_in_answer",
             "text",
             "question",
             "answer",
             "mode",
+            "retrieval_status",
             "generated_at_utc",
             "disclaimer",
         ]
     )
+    matches = state.get("matches") or []
+    status = state.get("retrieval_status") or retrieval_status(matches)
     writer.writerow(
         [
             "draft",
@@ -811,9 +917,12 @@ def build_export_csv(state: dict) -> str:
             "",
             "",
             "",
+            "",
+            "",
             state.get("question") or "",
             state.get("answer") or state.get("draft") or "",
             export_mode_label(state),
+            status,
             state.get("generated_at") or "",
             DISCLAIMER_SHORT,
         ]
@@ -826,7 +935,10 @@ def build_export_csv(state: dict) -> str:
                 "",
                 "",
                 key,
+                "",
+                "",
                 value,
+                "",
                 "",
                 "",
                 "",
@@ -834,7 +946,8 @@ def build_export_csv(state: dict) -> str:
                 "",
             ]
         )
-    for m in state.get("matches") or []:
+    for m in matches:
+        snippet = m.get("snippet") or control_snippet(m.get("text") or "")
         writer.writerow(
             [
                 "retrieved_control",
@@ -842,12 +955,15 @@ def build_export_csv(state: dict) -> str:
                 f"{float(m.get('score') or 0):.4f}",
                 m.get("source", ""),
                 m.get("title", ""),
+                snippet,
+                "yes" if m.get("used_in_answer") else "no",
                 m.get("text", ""),
                 "",
                 "",
                 "",
+                status,
                 "",
-                "",
+                DISCLAIMER_SHORT,
             ]
         )
     return buf.getvalue()

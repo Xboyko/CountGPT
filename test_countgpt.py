@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import countgpt
+import parse_findings
+from evals.run_retrieval_eval import main as retrieval_eval_main, validate_cases, load_cases
 
 
 class DraftRoutingTests(unittest.TestCase):
@@ -122,6 +127,9 @@ class ExportAndHostTests(unittest.TestCase):
         self.assertIn("AC-2 requires account management.", md)
         self.assertIn("AC-2", md)
         self.assertIn("lookup", md)
+        self.assertIn("Snippet", md)
+        self.assertIn("Manage accounts.", md)
+        self.assertIn(countgpt.DISCLAIMER_SHORT, md)
 
     def test_export_csv_has_draft_and_control_rows(self):
         state = {
@@ -144,6 +152,9 @@ class ExportAndHostTests(unittest.TestCase):
         self.assertIn("draft", csv_text)
         self.assertIn("retrieved_control", csv_text)
         self.assertIn("AC-2", csv_text)
+        self.assertIn("snippet", csv_text)
+        self.assertIn("used_in_answer", csv_text)
+        self.assertIn(countgpt.DISCLAIMER_SHORT, csv_text)
 
     def test_ollama_host_default_and_override(self):
         with patch.dict(os.environ, {}, clear=False):
@@ -273,6 +284,9 @@ class WorkbenchPromptTests(unittest.TestCase):
         self.assertEqual(captured["retrieve_query"], "SC-8 Weak TLS cipher")
         self.assertIn("Draft a POA&M", captured["question"])
         self.assertEqual(result["matches"][0]["id"], "SC-8")
+        self.assertIn("snippet", result["matches"][0])
+        self.assertIn("used_in_answer", result["matches"][0])
+        self.assertIn(result["retrieval_status"], {"ok", "weak", "empty"})
 
     def test_export_markdown_includes_workbench_fields(self):
         md = countgpt.build_export_markdown(
@@ -296,6 +310,129 @@ class WorkbenchPromptTests(unittest.TestCase):
             when=__import__("datetime").datetime(2026, 1, 2, 3, 4, 5, tzinfo=__import__("datetime").timezone.utc),
         )
         self.assertTrue(name.startswith("countgpt-ssp-draft-"))
+
+
+class CitationAnnotationTests(unittest.TestCase):
+    def test_snippet_and_used_in_answer(self):
+        matches = [
+            {
+                "id": "AC-2",
+                "title": "Account Management",
+                "text": "Manage information system accounts. " * 20,
+                "score": 1.0,
+                "source": "id:exact",
+            },
+            {
+                "id": "AC-20",
+                "title": "Use of External Systems",
+                "text": "Authorize external systems.",
+                "score": 0.4,
+                "source": "semantic",
+            },
+        ]
+        annotated = countgpt.annotate_matches(matches, "AC-2 requires account management.")
+        self.assertTrue(annotated[0]["used_in_answer"])
+        self.assertFalse(annotated[1]["used_in_answer"])
+        self.assertTrue(annotated[0]["snippet"])
+        self.assertLessEqual(len(annotated[0]["snippet"]), countgpt.SNIPPET_CHARS + 1)
+        self.assertEqual(countgpt.retrieval_status(annotated), "ok")
+
+    def test_empty_and_weak_retrieval_status(self):
+        self.assertEqual(countgpt.retrieval_status([]), "empty")
+        self.assertIn("no confident", countgpt.WEAK_RETRIEVAL_NOTE.lower())
+        weak = [
+            {
+                "id": "PL-2",
+                "title": "System Security Plan",
+                "text": "Develop a plan.",
+                "score": 0.36,
+                "source": "semantic",
+                "used_in_answer": False,
+            }
+        ]
+        self.assertEqual(countgpt.retrieval_status(weak), "weak")
+        self.assertIn("low-confidence", countgpt.retrieval_note("weak").lower())
+
+    def test_dry_run_empty_does_not_invent_citations(self):
+        text = countgpt.dry_run_answer("Banana control XYZ-99 requirements", [])
+        self.assertIn("could not find a confident", text.lower())
+        self.assertIn("no control citations were invented", text.lower())
+
+
+class ParseFindingsTests(unittest.TestCase):
+    def test_csv_maps_known_columns_and_keeps_plugin(self):
+        csv_text = (
+            "Plugin ID,Name,Severity,Host,Synopsis\n"
+            "51192,SSL Certificate Cannot Be Trusted,High,10.2.4.18,"
+            "The remote service X.509 certificate cannot be trusted.\n"
+        )
+        result = parse_findings.parse_findings(csv_text, filename="acas.csv")
+        self.assertEqual(len(result["rows"]), 1)
+        row = result["rows"][0]
+        self.assertEqual(row["plugin_id"], "51192")
+        self.assertEqual(row["severity"], "High")
+        self.assertEqual(row["host"], "10.2.4.18")
+        self.assertIn("SSL Certificate", row["finding"])
+        self.assertEqual(row["discovery_date"], "")
+        self.assertIn("Best-effort", result["disclaimer"])
+
+    def test_nessus_kv_block_does_not_invent_ids_or_dates(self):
+        text = (
+            "Plugin ID: 65821\n"
+            "Plugin Name: SSL Version 2 and 3 Protocol Detection\n"
+            "Severity: Critical\n"
+            "Host: web01.missiontracker.mil\n"
+            "Synopsis: The remote service accepts old SSL protocols.\n"
+        )
+        result = parse_findings.parse_findings(text)
+        self.assertEqual(len(result["rows"]), 1)
+        row = result["rows"][0]
+        self.assertEqual(row["plugin_id"], "65821")
+        self.assertEqual(row["severity"], "High")
+        self.assertEqual(row["host"], "web01.missiontracker.mil")
+        self.assertEqual(row["discovery_date"], "")
+        self.assertIn("old SSL", row["finding"])
+
+    def test_unlabeled_prose_has_no_invented_plugin(self):
+        text = "The public login page still allows a weak TLS cipher suite."
+        result = parse_findings.parse_findings(text)
+        self.assertEqual(len(result["rows"]), 1)
+        self.assertEqual(result["rows"][0]["plugin_id"], "")
+        self.assertEqual(result["rows"][0]["discovery_date"], "")
+        self.assertIn("weak TLS", result["rows"][0]["finding"])
+
+    def test_date_only_copied_when_present(self):
+        text = (
+            "Plugin ID: 51192\n"
+            "Name: SSL Certificate Cannot Be Trusted\n"
+            "Severity: High\n"
+            "First discovered: 2026-09-01\n"
+        )
+        row = parse_findings.parse_findings(text)["rows"][0]
+        self.assertEqual(row["discovery_date"], "2026-09-01")
+
+
+class RetrievalEvalSuiteTests(unittest.TestCase):
+    def test_cases_file_is_well_formed(self):
+        data = load_cases()
+        errors = validate_cases(data)
+        self.assertEqual(errors, [])
+        self.assertGreaterEqual(len(data["cases"]), 20)
+        self.assertGreaterEqual(float(data["min_hit_rate"]), 0.5)
+
+    def test_runner_dry_run_and_fixture_without_gpu(self):
+        self.assertEqual(retrieval_eval_main(["--dry-run"]), 0)
+        self.assertEqual(retrieval_eval_main(["--fixture"]), 0)
+        script = Path(__file__).resolve().parent / "evals" / "run_retrieval_eval.py"
+        proc = subprocess.run(
+            [sys.executable, str(script), "--dry-run"],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("well-formed", proc.stdout.lower())
 
 
 if __name__ == "__main__":

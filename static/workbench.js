@@ -82,9 +82,15 @@
     exportCsv: document.getElementById("btn-export-csv"),
     sourcesList: document.getElementById("sources-list"),
     sourcesEmpty: document.getElementById("sources-empty"),
+    sourcesStatus: document.getElementById("sources-status"),
     sourcesMode: document.getElementById("sources-mode"),
     sourcesPanel: document.getElementById("sources-panel"),
     sourcesBackdrop: document.getElementById("sources-backdrop"),
+    findingsPaste: document.getElementById("findings-paste"),
+    findingsFile: document.getElementById("findings-file"),
+    findingsNote: document.getElementById("findings-import-note"),
+    findingsRows: document.getElementById("findings-rows"),
+    parseFindings: document.getElementById("btn-parse-findings"),
     formPoam: document.getElementById("form-poam"),
     formSsp: document.getElementById("form-ssp"),
     draftEmpty: document.getElementById("draft-empty"),
@@ -108,6 +114,7 @@
     fieldHelp: { poam: {}, ssp: {} },
     scenarios: [],
     scenario: null,
+    findingsFilename: "",
   };
 
   function renderMarkdown(text) {
@@ -134,36 +141,19 @@
     els.generateSsp.disabled = busy;
   }
 
-  function renderSources(matches, modeLabel) {
-    const list = matches || [];
-    if (!list.length) {
-      els.sourcesList.hidden = true;
-      els.sourcesList.replaceChildren();
-      els.sourcesEmpty.hidden = false;
-      els.sourcesMode.classList.add("hidden");
+  function renderSources(matches, modeLabel, retrieval) {
+    const info = retrieval || {};
+    if (window.CountGPTSources) {
+      window.CountGPTSources.renderSources(els, matches, {
+        afterTurn: Boolean(state.last),
+        modeLabel: modeLabel || "drafting",
+        retrievalStatus: info.status,
+        retrievalNote: info.note,
+      });
       return;
     }
-    els.sourcesEmpty.hidden = true;
-    els.sourcesList.hidden = false;
-    els.sourcesMode.classList.remove("hidden");
-    els.sourcesMode.textContent = modeLabel || "drafting";
-    els.sourcesList.replaceChildren();
-    for (const match of list) {
-      const card = document.createElement("article");
-      card.className = "source-card";
-      const text = (match.text || "").trim();
-      const clipped = text.length > 420 ? `${text.slice(0, 420).trim()}…` : text;
-      card.innerHTML = `
-        <div class="source-meta">
-          <span class="source-id">${escapeHtml(match.id || "")}</span>
-          <span class="source-score">${Number(match.score || 0).toFixed(2)}</span>
-          <span class="source-kind">${escapeHtml(match.source || "")}</span>
-        </div>
-        <p class="source-title">${escapeHtml(match.title || "")}</p>
-        <p class="source-text">${escapeHtml(clipped || "No statement text.")}</p>
-      `;
-      els.sourcesList.appendChild(card);
-    }
+    els.sourcesEmpty.hidden = Boolean(matches && matches.length);
+    els.sourcesList.hidden = !els.sourcesEmpty.hidden;
   }
 
   function showDraft(text, meta) {
@@ -177,6 +167,12 @@
     els.draftEmpty.classList.add("hidden");
     els.draftOutput.classList.remove("hidden");
     md.innerHTML = renderMarkdown(text);
+    if (window.CountGPTSources && state.last && state.last.matches) {
+      window.CountGPTSources.decorateCitations(md, state.last.matches, (id) => {
+        toggleSources(true);
+        window.CountGPTSources.highlightSource(els.sourcesList, id);
+      });
+    }
     if (meta && meta.mode) {
       const days = meta.severity_timeline_days;
       els.draftMeta.classList.remove("hidden");
@@ -465,9 +461,14 @@
         drafting: true,
         mode,
         fields: (data.meta && data.meta.fields) || payload,
+        retrieval_status: data.retrieval_status || (data.meta && data.meta.retrieval_status) || "",
+        retrieval_note: data.retrieval_note || (data.meta && data.meta.retrieval_note) || "",
       };
       showDraft(data.draft || "", data.meta);
-      renderSources(data.matches, mode);
+      renderSources(data.matches, mode, {
+        status: state.last.retrieval_status,
+        note: state.last.retrieval_note,
+      });
       setExportEnabled(Boolean((data.draft || "").trim()));
       if (state.scenario && state.scenario.mode === mode) {
         showGoodLooks(state.scenario.what_good_looks_like);
@@ -582,6 +583,86 @@
     if (slug) applyScenario(slug, { keepUrl: true });
   }
 
+  function findingsToForm(row) {
+    const mapped = {
+      finding: row.finding || row.synopsis || row.plugin_name || "",
+      severity: row.severity || document.getElementById("poam-severity").value,
+      system_name: row.system_name || row.host || "",
+      detector_source: row.detector_source || "ACAS/Nessus",
+      plugin_id: row.plugin_id || "",
+      discovery_date: row.discovery_date || "",
+      control_id: row.control_id || "",
+    };
+    for (const [key, value] of Object.entries(mapped)) {
+      const node = document.getElementById(POAM_FIELDS[key]);
+      if (node && value) node.value = value;
+    }
+    if (els.findingsRows) {
+      els.findingsRows.querySelectorAll(".finding-row").forEach((item) => {
+        item.classList.toggle("selected", item.dataset.rowId === String(row._rowId || ""));
+      });
+    }
+  }
+
+  function renderFindingRows(result) {
+    if (!els.findingsRows || !els.findingsNote) return;
+    const rows = (result && result.rows) || [];
+    els.findingsNote.classList.remove("hidden");
+    els.findingsNote.textContent =
+      result.warning ||
+      result.disclaimer ||
+      "Best-effort / learning aid. Select a row to fill the form.";
+    if (!rows.length) {
+      els.findingsRows.hidden = true;
+      els.findingsRows.replaceChildren();
+      return;
+    }
+    els.findingsRows.hidden = false;
+    els.findingsRows.replaceChildren();
+    rows.forEach((row, index) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "finding-row";
+      row._rowId = String(index);
+      item.dataset.rowId = String(index);
+      const plugin = row.plugin_id ? `Plugin ${row.plugin_id}` : "No plugin ID in paste";
+      const sev = row.severity || "Severity not mapped";
+      const host = row.host || row.system_name || "Host not mapped";
+      item.innerHTML = `
+        <span class="finding-row-meta">${escapeHtml(plugin)} · ${escapeHtml(sev)} · ${escapeHtml(host)}</span>
+        <span class="finding-row-text">${escapeHtml(row.finding || row.synopsis || row.plugin_name || "Untitled row")}</span>
+      `;
+      item.addEventListener("click", () => findingsToForm(row));
+      els.findingsRows.appendChild(item);
+    });
+  }
+
+  async function parsePastedFindings() {
+    const text = (els.findingsPaste && els.findingsPaste.value) || "";
+    if (!text.trim()) {
+      window.alert("Paste scan lines or a CSV first.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/parse-findings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, filename: state.findingsFilename || "" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail || res.statusText || "Parse failed";
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      renderFindingRows(data);
+    } catch (err) {
+      if (els.findingsNote) {
+        els.findingsNote.classList.remove("hidden");
+        els.findingsNote.textContent = err && err.message ? err.message : String(err);
+      }
+    }
+  }
+
   document.querySelectorAll(".mode-tabs .tab").forEach((tab) => {
     tab.addEventListener("click", () => setMode(tab.dataset.mode));
   });
@@ -626,6 +707,16 @@
 
   els.scenarioSelect?.addEventListener("change", () => {
     applyScenario(els.scenarioSelect.value);
+  });
+
+  els.parseFindings?.addEventListener("click", parsePastedFindings);
+  els.findingsFile?.addEventListener("change", async () => {
+    const file = els.findingsFile.files && els.findingsFile.files[0];
+    if (!file) return;
+    state.findingsFilename = file.name || "";
+    const text = await file.text();
+    if (els.findingsPaste) els.findingsPaste.value = text;
+    parsePastedFindings();
   });
 
   els.exportMd.addEventListener("click", () => exportTurn("md"));

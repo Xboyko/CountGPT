@@ -43,6 +43,11 @@
       "try_in_chat": "What does AC-2 require?"
     },
     {
+      "id": "missiontracker",
+      "title": "MissionTracker walkthrough",
+      "try_in_chat": "What should an ISSO do after an ACAS High finding?"
+    },
+    {
       "id": "practice-scenarios",
       "title": "Practice scenarios"
     },

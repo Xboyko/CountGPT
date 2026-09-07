@@ -59,6 +59,7 @@
             <a href="#severity-timelines">Severity &amp; timelines</a>
             <a href="#acas-vs-stig">ACAS vs STIG</a>
             <a href="#how-countgpt-answers">How answers work</a>
+            <a href="#missiontracker">MissionTracker walkthrough</a>
             <a href="#practice-scenarios">Practice scenarios</a>
             <a href="#glossary">Glossary</a>
           </nav>
@@ -334,6 +335,145 @@
                 without a human review. The yellow banner is there on purpose.
               </p>
               <a class="try-chat" href="/?q=What%20does%20AC-2%20require%3F">Try in Chat</a>
+            </section>
+          </article>
+
+          <article id="missiontracker" class="guide-chapter">
+            <h2>MissionTracker walkthrough</h2>
+            <p class="fictional-flag">
+              <strong>Fictional / for learning.</strong>
+              MissionTracker is a made-up contractor web app. The people, scan
+              hit, and dates below are practice data — not a real network and
+              not assessor-validated.
+            </p>
+            <section>
+              <h3>Setup: who owns the system</h3>
+              <p>
+                A contractor runs <strong>MissionTracker</strong>, a Department
+                of Defense-style web app used to track field-task status. It is
+                inside an
+                <button type="button" class="term-chip" data-term="authorization-boundary">authorization boundary</button>
+                that already has an
+                <button type="button" class="term-chip" data-term="ato">ATO</button>
+                — written permission to operate. The
+                <button type="button" class="term-chip" data-term="isso">ISSO</button>
+                (Alex Rivera) does the day-to-day paperwork. The
+                <button type="button" class="term-chip" data-term="issm">ISSM</button>
+                reviews. The
+                <button type="button" class="term-chip" data-term="ao">AO</button>
+                accepts leftover risk. None of those people is CountGPT.
+              </p>
+              <p>
+                Two documents already exist. The
+                <button type="button" class="term-chip" data-term="ssp">SSP</button>
+                says how MissionTracker is supposed to be protected. The
+                <button type="button" class="term-chip" data-term="poam">POA&amp;M</button>
+                lists what is still broken and when it should be fixed. They
+                must stay honest with each other.
+              </p>
+              <a class="try-chat" href="/?q=What%20does%20an%20ISSO%20do%20after%20an%20ACAS%20High%20finding%3F">Try in Chat: ISSO after a High finding</a>
+            </section>
+            <section>
+              <h3>Monday: an ACAS High weak-cipher hit</h3>
+              <p>
+                On Monday an
+                <button type="button" class="term-chip" data-term="acas">ACAS</button>
+                /
+                <button type="button" class="term-chip" data-term="nessus">Nessus</button>
+                scan of the public login page reports a High finding: the
+                server still allows a weak TLS cipher. Common practice clocks
+                treat High as about 30 days from discovery — not from “today,”
+                and not a law that every agency must use.
+              </p>
+              <p>
+                Alex writes down what the scanner actually said. If the paste
+                has no
+                <button type="button" class="term-chip" data-term="plugin-id">plugin ID</button>,
+                the draft keeps a placeholder. Inventing a number would make
+                the package look more finished than it is.
+              </p>
+              <p class="practice-actions">
+                <a class="try-chat" href="/workbench?scenario=missiontracker-acas-high">Open the MissionTracker POA&amp;M scenario</a>
+                <a href="/workbench?scenario=acas-high-weak-cipher">Related HarborDesk High cipher practice</a>
+              </p>
+            </section>
+            <section>
+              <h3>What gets written</h3>
+              <p>
+                The scan hit becomes a POA&amp;M item: weakness, owner, 30-day
+                plan, milestones, status still Open. The NIST rules that usually
+                sit next to this story are
+                <code>SC-8</code> (protect data in transit) and sometimes
+                <code>SC-13</code> (use approved cryptography). If the SSP
+                paragraph for those rules still says “we only allow modern
+                TLS,” that paragraph needs a note or a planned edit — the SSP
+                should not pretend the hole is already gone.
+              </p>
+              <p>
+                Optional practice: draft the
+                <code>SC-8</code> SSP statement for MissionTracker after you
+                write the POA&amp;M, and keep unnamed products as placeholders.
+              </p>
+              <p class="practice-actions">
+                <a class="try-chat" href="/?q=What%20does%20SC-8%20require%3F">Try in Chat: What does SC-8 require?</a>
+                <a href="/workbench?scenario=ssp-ia2-mfa">Related SSP MFA practice</a>
+              </p>
+            </section>
+            <section>
+              <h3>Later: assessment, AO decision, watching</h3>
+              <p>
+                Months later testers write a
+                <button type="button" class="term-chip" data-term="sar">SAR</button>
+                — what they checked, what passed, what is still open. The AO
+                reads leftover risk and either keeps, limits, or stops the ATO.
+                After the system is live,
+                <button type="button" class="term-chip" data-term="continuous-monitoring">Continuous Monitoring</button>
+                continues: new scans, updated POA&amp;M items, honest SSP
+                edits. An ATO is not “set and forget.”
+              </p>
+              <a class="try-chat" href="/?q=What%20is%20Continuous%20Monitoring%20after%20an%20ATO%3F">Try in Chat: Continuous Monitoring</a>
+            </section>
+            <section>
+              <h3>Where this work lives in CountGPT</h3>
+              <table class="guide-table">
+                <thead>
+                  <tr>
+                    <th>Real-life artifact</th>
+                    <th>Where to practice it here</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Roles, ATO, SSP vs POA&amp;M vs SAR</td>
+                    <td>
+                      Guide chapters
+                      <a href="#roles">Roles</a>,
+                      <a href="#rmf-ato">RMF &amp; ATO</a>,
+                      <a href="#ssp-vs-poam">SSP vs POA&amp;M</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Look up SC-8 / High fix clocks</td>
+                    <td><a href="/?q=What%20does%20SC-8%20require%3F">Chat</a> · Sources panel quotes the retrieved rule</td>
+                  </tr>
+                  <tr>
+                    <td>Monday ACAS High weak-cipher POA&amp;M</td>
+                    <td><a href="/workbench?scenario=missiontracker-acas-high">Workbench · MissionTracker scenario</a></td>
+                  </tr>
+                  <tr>
+                    <td>Paste a scan line or CSV into a draft row</td>
+                    <td>Workbench POA&amp;M → “Paste ACAS / Nessus findings or CSV”</td>
+                  </tr>
+                  <tr>
+                    <td>How-we-do-MFA SSP paragraph</td>
+                    <td><a href="/workbench?scenario=ssp-ia2-mfa">Workbench · IA-2 scenario</a></td>
+                  </tr>
+                  <tr>
+                    <td>Official eMASS package / AO signature</td>
+                    <td>Not here. CountGPT drafts only; a person still reviews.</td>
+                  </tr>
+                </tbody>
+              </table>
             </section>
           </article>
 
