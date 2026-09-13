@@ -1,10 +1,8 @@
 (() => {
   const EXAMPLES = [
     "What is an SSP?",
-    "SSP vs POA&M?",
-    "What is AC-2?",
     "What does AC-2 require?",
-    "Draft a POA&M for a Moderate finding: weak cipher suite on a web server.",
+    "SSP vs POA&M?",
   ];
 
   const els = {
@@ -21,10 +19,22 @@
     sourcesMode: document.getElementById("sources-mode"),
     sourcesPanel: document.getElementById("sources-panel"),
     sourcesBackdrop: document.getElementById("sources-backdrop"),
+    sourcesCount: document.getElementById("sources-count"),
+    sourcesToggle: document.getElementById("btn-sources"),
     health: document.getElementById("health-pill"),
+    chatShell: document.getElementById("chat-shell"),
+    historySidebar: document.getElementById("history-sidebar"),
+    historyList: document.getElementById("history-list"),
+    historyOpen: document.getElementById("btn-history-open"),
+    historyClose: document.getElementById("btn-history-close"),
+    historyExpand: document.getElementById("btn-history-expand"),
+    historyBackdrop: document.getElementById("history-backdrop"),
   };
 
+  const store = window.CountGPTHistory;
+
   const state = {
+    sessionId: "",
     history: [],
     lastTurn: null,
     busy: false,
@@ -54,8 +64,8 @@
     const wrap = document.createElement("div");
     wrap.className = "empty-state";
     wrap.innerHTML = `
-      <h2>Ask a control question or request a draft</h2>
-      <p>Answers are grounded in retrieved NIST SP 800-53 controls. Cite IDs stay on the right. New to the terms? Start with the <a href="/guide">learning guide</a>. For a structured POA&amp;M or SSP draft, open the <a href="/workbench">workbench</a>.</p>
+      <h2>Ask a control question</h2>
+      <p>Answers cite retrieved NIST SP 800-53 controls. Open Sources to inspect them. New to the terms? Start with the <a href="/guide">learning guide</a>. For a structured draft, use the <a href="/workbench">workbench</a>.</p>
     `;
     const row = document.createElement("div");
     row.className = "examples";
@@ -118,29 +128,70 @@
     document.getElementById("typing-row")?.remove();
   }
 
+  function updateSourcesCount(matches) {
+    const n = (matches || []).length;
+    if (!els.sourcesCount) return;
+    if (n) {
+      els.sourcesCount.hidden = false;
+      els.sourcesCount.classList.remove("hidden");
+      els.sourcesCount.textContent = String(n);
+    } else {
+      els.sourcesCount.hidden = true;
+      els.sourcesCount.classList.add("hidden");
+      els.sourcesCount.textContent = "";
+    }
+  }
+
   function renderSources(matches, drafting, explain, retrieval) {
     const info = retrieval || {};
-    const modeLabel = drafting ? "drafting" : explain ? "explain" : "lookup";
     if (window.CountGPTSources) {
       window.CountGPTSources.renderSources(els, matches, {
         afterTurn: Boolean(state.lastTurn),
         explain,
-        modeLabel,
+        modeLabel: drafting ? "drafting" : explain ? "explain" : state.lastTurn ? "lookup" : "",
         retrievalStatus: info.status,
         retrievalNote: info.note,
       });
-      return;
+    } else {
+      els.sourcesEmpty.hidden = Boolean(matches && matches.length);
+      els.sourcesList.hidden = !els.sourcesEmpty.hidden;
     }
-    els.sourcesEmpty.hidden = Boolean(matches && matches.length);
-    els.sourcesList.hidden = !els.sourcesEmpty.hidden;
+    updateSourcesCount(matches);
   }
 
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
+  function persistCurrent() {
+    if (!store || !state.sessionId) return;
+    const session = {
+      id: state.sessionId,
+      title: store.titleFromMessages(state.history),
+      createdAt: (store.getSession(state.sessionId) || {}).createdAt,
+      messages: state.history,
+      lastTurn: state.lastTurn,
+    };
+    if (!session.createdAt) session.createdAt = Date.now();
+    if (!session.messages.length) return;
+    store.upsertSession(session);
+    renderHistoryList();
+  }
+
+  function applySession(session) {
+    state.sessionId = session.id;
+    state.history = Array.isArray(session.messages) ? session.messages : [];
+    state.lastTurn = session.lastTurn || null;
+    if (store) store.setActiveId(session.id);
+    renderMessages();
+    const matches = (state.lastTurn && state.lastTurn.matches) || [];
+    renderSources(
+      matches,
+      Boolean(state.lastTurn && state.lastTurn.drafting),
+      Boolean(state.lastTurn && state.lastTurn.explain),
+      {
+        status: (state.lastTurn && state.lastTurn.retrieval_status) || "",
+        note: (state.lastTurn && state.lastTurn.retrieval_note) || "",
+      }
+    );
+    setExportEnabled(Boolean(state.lastTurn && (state.lastTurn.answer || "").trim()));
+    renderHistoryList();
   }
 
   function historyForApi() {
@@ -159,6 +210,7 @@
 
     const pendingHistory = historyForApi();
     state.history.push({ role: "user", content: message });
+    persistCurrent();
     renderMessages();
     els.input.value = "";
     resizeInput();
@@ -204,6 +256,7 @@
       });
       setExportEnabled(false);
     } finally {
+      persistCurrent();
       removeTyping();
       renderMessages();
       setBusy(false);
@@ -211,13 +264,91 @@
     }
   }
 
-  function resetChat() {
-    state.history = [];
-    state.lastTurn = null;
-    renderMessages();
-    renderSources([], false, false, {});
-    setExportEnabled(false);
+  function newChat() {
+    if (store && !state.history.length && store.getSession(state.sessionId)) {
+      els.input.focus();
+      return;
+    }
+    const session = store ? store.emptySession() : { id: `chat-${Date.now()}`, messages: [], lastTurn: null };
+    if (store) store.setActiveId(session.id);
+    applySession(session);
+    toggleHistory(false);
     els.input.focus();
+  }
+
+  function selectSession(id) {
+    if (!store || !id || id === state.sessionId) {
+      toggleHistory(false);
+      return;
+    }
+    const session = store.getSession(id);
+    if (!session) return;
+    applySession(session);
+    toggleHistory(false);
+    els.input.focus();
+  }
+
+  function deleteSession(id) {
+    if (!store || !id) return;
+    store.deleteSession(id);
+    if (id === state.sessionId) {
+      const next = store.loadAll()[0] || store.emptySession();
+      applySession(next);
+    } else {
+      renderHistoryList();
+    }
+  }
+
+  function renderHistoryList() {
+    if (!els.historyList) return;
+    const sessions = store ? store.loadAll() : [];
+    const visible = sessions.filter((item) => item.messages && item.messages.length);
+    els.historyList.replaceChildren();
+    if (!visible.length) {
+      const empty = document.createElement("p");
+      empty.className = "history-empty";
+      empty.textContent = "No saved chats yet.";
+      els.historyList.appendChild(empty);
+      return;
+    }
+    for (const session of visible) {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      if (session.id === state.sessionId) row.classList.add("active");
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "history-item-main";
+      btn.title = session.title;
+      btn.innerHTML = `
+        <span class="history-item-title">${escapeHtml(session.title)}</span>
+        <span class="history-item-time">${escapeHtml(store.formatTime(session.updatedAt))}</span>
+      `;
+      btn.addEventListener("click", () => selectSession(session.id));
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn icon history-item-delete";
+      del.setAttribute("aria-label", `Delete ${session.title}`);
+      del.title = "Delete chat";
+      del.textContent = "×";
+      del.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteSession(session.id);
+      });
+
+      row.append(btn, del);
+      els.historyList.appendChild(row);
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
   }
 
   function prefillFromQuery() {
@@ -265,10 +396,36 @@
     els.input.style.height = `${Math.min(els.input.scrollHeight, 160)}px`;
   }
 
+  function isMobile() {
+    return window.matchMedia("(max-width: 880px)").matches;
+  }
+
   function toggleSources(force) {
     const open = typeof force === "boolean" ? force : !els.sourcesPanel.classList.contains("open");
     els.sourcesPanel.classList.toggle("open", open);
+    els.sourcesPanel.setAttribute("aria-hidden", open ? "false" : "true");
     els.sourcesBackdrop.hidden = !open;
+    if (els.sourcesToggle) els.sourcesToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function applySidebarCollapsed(collapsed) {
+    els.chatShell.classList.toggle("history-collapsed", collapsed);
+    els.historySidebar.classList.toggle("collapsed", collapsed);
+    if (store) store.setSidebarCollapsed(collapsed);
+  }
+
+  function toggleHistory(force) {
+    if (!isMobile()) {
+      if (typeof force === "boolean") {
+        applySidebarCollapsed(!force);
+        return;
+      }
+      applySidebarCollapsed(!els.chatShell.classList.contains("history-collapsed"));
+      return;
+    }
+    const open = typeof force === "boolean" ? force : !els.historySidebar.classList.contains("open");
+    els.historySidebar.classList.toggle("open", open);
+    if (els.historyBackdrop) els.historyBackdrop.hidden = !open;
   }
 
   async function refreshHealth() {
@@ -301,6 +458,21 @@
     }
   }
 
+  function restoreOrCreate() {
+    if (!store) {
+      applySession({ id: `chat-${Date.now()}`, messages: [], lastTurn: null });
+      return;
+    }
+    const activeId = store.getActiveId();
+    const existing = activeId && store.getSession(activeId);
+    if (existing) {
+      applySession(existing);
+      return;
+    }
+    const newest = store.loadAll().find((item) => item.messages && item.messages.length);
+    applySession(newest || store.emptySession());
+  }
+
   els.form.addEventListener("submit", (event) => {
     event.preventDefault();
     sendMessage(els.input.value);
@@ -314,7 +486,7 @@
   });
   els.input.addEventListener("input", resizeInput);
 
-  els.newChat.addEventListener("click", resetChat);
+  els.newChat.addEventListener("click", newChat);
   els.exportMd.addEventListener("click", () => exportTurn("md"));
   els.exportCsv.addEventListener("click", () => exportTurn("csv"));
 
@@ -322,8 +494,29 @@
     btn.addEventListener("click", () => toggleSources());
   });
   els.sourcesBackdrop.addEventListener("click", () => toggleSources(false));
+  els.historyOpen?.addEventListener("click", () => toggleHistory(true));
+  els.historyClose?.addEventListener("click", () => toggleHistory(false));
+  els.historyExpand?.addEventListener("click", () => toggleHistory(true));
+  els.historyBackdrop?.addEventListener("click", () => toggleHistory(false));
 
-  resetChat();
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    toggleSources(false);
+    if (isMobile()) toggleHistory(false);
+  });
+
+  window.addEventListener("resize", () => {
+    if (!isMobile()) {
+      els.historySidebar.classList.remove("open");
+      if (els.historyBackdrop) els.historyBackdrop.hidden = true;
+    }
+  });
+
+  if (store && store.isSidebarCollapsed()) {
+    applySidebarCollapsed(true);
+  }
+
+  restoreOrCreate();
   prefillFromQuery();
   refreshHealth();
 })();
