@@ -9,12 +9,14 @@ import csv
 import io
 import os
 import re
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
 import ollama
 import requests
 
+import lora_infer
 import retrieve
 
 OLLAMA_MODEL = "llama3.1:8b"
@@ -101,6 +103,8 @@ WEAK_SEMANTIC_SCORE = 0.50
 
 STORE_OK = False
 STORE_ERROR: str | None = None
+
+_generation = threading.local()
 
 
 class OllamaError(RuntimeError):
@@ -209,6 +213,24 @@ def reset_store_state() -> None:
     global STORE_OK, STORE_ERROR
     STORE_OK = False
     STORE_ERROR = None
+    _set_generation_info("ollama", OLLAMA_MODEL)
+
+
+def _set_generation_info(backend: str, model: str) -> None:
+    _generation.backend = backend
+    _generation.model = model
+
+
+def last_generation_info() -> dict[str, str]:
+    """Backend used by the most recent generate_answer() on this thread."""
+    return {
+        "backend": getattr(_generation, "backend", "ollama"),
+        "model": getattr(_generation, "model", OLLAMA_MODEL),
+    }
+
+
+def lora_model_label() -> str:
+    return f"lora:{lora_infer.lora_path().name}"
 
 
 def has_control_id(question: str) -> bool:
@@ -267,13 +289,21 @@ def history_to_text(history, max_turns=HISTORY_TURNS) -> str:
     return "\n".join(lines)
 
 
-def build_prompt(question, history, matches):
+def wants_drafting(question: str, drafting: bool | None = None) -> bool:
+    """Workbench passes drafting=True; chat uses is_drafting_task()."""
+    if drafting is not None:
+        return bool(drafting)
+    return is_drafting_task(question)
+
+
+def build_prompt(question, history, matches, *, drafting: bool | None = None):
     history_text = history_to_text(history)
     history_block = (
         f"Recent conversation:\n{history_text}\n\n" if history_text else ""
     )
+    draft = wants_drafting(question, drafting)
 
-    if is_explain_task(question):
+    if is_explain_task(question) and not draft:
         return build_explain_prompt(question, history_block, matches)
 
     if not matches:
@@ -292,7 +322,7 @@ def build_prompt(question, history, matches):
     context_text = retrieve.format_matches(matches)
     cited = ", ".join(sorted({m["id"] for m in matches if m.get("id")}))
 
-    if is_drafting_task(question):
+    if draft:
         return f"""You are CountGPT, a cybersecurity analyst assistant for NIST SP 800-53 and related drafting (POA&M, control implementation statements, SOC triage, eMASS packages).
 
 Use the retrieved NIST rules below as the control source of truth. Cite rule IDs ({cited}).
@@ -479,32 +509,58 @@ def serialize_match(match: dict) -> dict[str, Any]:
 
 
 def generate_answer(
-    question: str, history, *, retrieve_query: str | None = None
+    question: str,
+    history,
+    *,
+    retrieve_query: str | None = None,
+    drafting: bool | None = None,
 ) -> tuple[str, list]:
     """Return (assistant_text, matches).
 
     ``retrieve_query`` optionally overrides the NIST search string so workbench
     forms can retrieve on a control ID / finding without stuffing the full
     drafting instructions into the embed query. Chat and Gradio omit it.
+
+    Drafting tasks (``is_drafting_task`` or workbench ``drafting=True``) try the
+    local LoRA adapter when it is available; lookup/explain always use Ollama.
     """
     if not STORE_OK:
+        _set_generation_info("none", OLLAMA_MODEL)
         return (
             (STORE_ERROR or retrieve.pkl_missing_message()) + " Then reload this chat.",
             [],
         )
     question = (question or "").strip()
     if not question:
+        _set_generation_info("none", OLLAMA_MODEL)
         return (
             "Ask a NIST 800-53 question, or request a POA&M / implementation-statement draft.",
             [],
         )
 
+    draft = wants_drafting(question, drafting)
     query_for_retrieve = (retrieve_query or question).strip() or question
     matches = retrieve.retrieve(query_for_retrieve, k=RETRIEVE_K)
     if dry_run_enabled():
+        _set_generation_info("dry_run", OLLAMA_MODEL)
         return dry_run_answer(question, matches), matches
 
-    prompt = build_prompt(question, history, matches)
+    prompt = build_prompt(question, history, matches, drafting=draft)
+    if draft:
+        if lora_infer.lora_available():
+            try:
+                content = lora_infer.generate_draft(prompt)
+                _set_generation_info("lora", lora_model_label())
+                return content, matches
+            except Exception as exc:  # noqa: BLE001 — any LoRA miss falls back to Ollama
+                print(
+                    f"CountGPT LoRA: draft failed ({exc}). "
+                    f"Falling back to Ollama {OLLAMA_MODEL}."
+                )
+        elif lora_infer.adapter_present() or lora_infer.force_ollama():
+            lora_infer.log_skip_reason()
+
+    _set_generation_info("ollama", OLLAMA_MODEL)
     try:
         response = get_ollama_client().chat(
             model=OLLAMA_MODEL,
@@ -529,9 +585,10 @@ def chat_turn(message: str, history=None) -> dict[str, Any]:
     message = (message or "").strip()
     drafting = is_drafting_task(message)
     explain = is_explain_task(message)
-    answer, matches = generate_answer(message, history)
+    answer, matches = generate_answer(message, history, drafting=drafting)
     annotated = annotate_matches(matches, answer)
     status = retrieval_status(annotated)
+    gen = last_generation_info()
     return {
         "answer": answer,
         "matches": annotated,
@@ -541,6 +598,8 @@ def chat_turn(message: str, history=None) -> dict[str, Any]:
         "retrieval_note": retrieval_note(status),
         "question": message,
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "backend": gen["backend"],
+        "model": gen["model"],
     }
 
 
@@ -758,11 +817,15 @@ def workbench_turn(mode: str, fields: dict | None = None) -> dict[str, Any]:
         timeline = None
     retrieve_query = workbench_retrieval_query(mode, normalized)
     answer, matches = generate_answer(
-        question, history=[], retrieve_query=retrieve_query or None
+        question,
+        history=[],
+        retrieve_query=retrieve_query or None,
+        drafting=True,
     )
     generated_at = datetime.now(timezone.utc).isoformat()
     annotated = annotate_matches(matches, answer)
     status = retrieval_status(annotated)
+    gen = last_generation_info()
     return {
         "draft": answer,
         "matches": annotated,
@@ -777,7 +840,8 @@ def workbench_turn(mode: str, fields: dict | None = None) -> dict[str, Any]:
             "severity_timeline_days": timeline,
             "fields": normalized,
             "disclaimer": DISCLAIMER_SHORT,
-            "model": OLLAMA_MODEL,
+            "model": gen["model"],
+            "backend": gen["backend"],
             "dry_run": dry_run_enabled(),
             "retrieval_status": status,
             "retrieval_note": retrieval_note(status),
@@ -819,7 +883,7 @@ def build_export_markdown(state: dict) -> str:
         "",
         f"- Generated (UTC): `{state.get('generated_at', '')}`",
         f"- Mode: `{export_mode_label(state)}`",
-        f"- Model: `{OLLAMA_MODEL}`",
+        f"- Model: `{state.get('model') or OLLAMA_MODEL}`",
         "",
     ]
     fields = state.get("fields") or {}
@@ -998,6 +1062,7 @@ def check_ollama(timeout: float = 2.0) -> dict[str, Any]:
 
 def health_status() -> dict[str, Any]:
     ollama_info = check_ollama()
+    lora_info = lora_infer.lora_status()
     store_loaded = bool(STORE_OK)
     dry = dry_run_enabled()
     ok = store_loaded and (bool(ollama_info.get("reachable")) or dry)
@@ -1006,6 +1071,7 @@ def health_status() -> dict[str, Any]:
         "store_loaded": store_loaded,
         "store_error": None if store_loaded else STORE_ERROR or retrieve.pkl_missing_message(),
         "ollama": ollama_info,
+        "lora": lora_info,
         "dry_run": dry,
         "model": OLLAMA_MODEL,
     }

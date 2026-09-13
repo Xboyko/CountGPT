@@ -524,18 +524,32 @@
     document.getElementById("btn-sources")?.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
+  function loraHealthNote(data) {
+    const lora = data.lora || {};
+    if (lora.loaded) return " · LoRA loaded (drafts)";
+    if (lora.available) return " · LoRA available (drafts)";
+    if (lora.force_ollama) return " · LoRA disabled (FORCE_OLLAMA)";
+    if (lora.adapter_present && !lora.cuda_available) return " · LoRA on disk, no CUDA";
+    return " · drafts on Ollama";
+  }
+
   async function refreshHealth() {
     try {
       const res = await fetch("/api/health");
       const data = await res.json();
       const storeOk = Boolean(data.store_loaded);
       const ollamaOk = Boolean(data.ollama && data.ollama.reachable);
+      const loraLoaded = Boolean(data.lora && data.lora.loaded);
       if (data.ok) {
         els.health.className = "pill pill-ok";
-        els.health.textContent = data.dry_run ? "Ready (dry-run)" : "Ready";
+        els.health.textContent = data.dry_run
+          ? "Ready (dry-run)"
+          : loraLoaded
+            ? "Ready · LoRA"
+            : "Ready";
         els.health.title = data.dry_run
-          ? `${data.model} · store loaded · dry-run (Ollama skipped)`
-          : `${data.model} · store loaded · Ollama reachable`;
+          ? `${data.model} · store loaded · dry-run (Ollama skipped)${loraHealthNote(data)}`
+          : `${data.model} · store loaded · Ollama reachable${loraHealthNote(data)}`;
       } else if (storeOk && !ollamaOk) {
         els.health.className = "pill pill-warn";
         els.health.textContent = "Ollama offline";

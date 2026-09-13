@@ -202,6 +202,12 @@ echo "  Guide:      ${LOCAL_URL}/guide"
 echo "  Chat:       ${LOCAL_URL}/"
 echo "  Workbench:  ${LOCAL_URL}/workbench"
 echo "  Health:     ${LOCAL_URL}/api/health"
+if [[ -d "${COUNTGPT_LORA_PATH:-countgpt_model}" ]]; then
+  echo
+  echo "  LoRA adapter: ${COUNTGPT_LORA_PATH:-countgpt_model}"
+  echo "  Drafting uses LoRA when CUDA is available; lookup stays on Ollama ${MODEL}."
+  echo "  Disable with COUNTGPT_FORCE_OLLAMA=1"
+fi
 echo
 echo "Local only — no public domain. Stop with Ctrl+C."
 echo "============================================================"

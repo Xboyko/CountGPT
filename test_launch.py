@@ -45,6 +45,8 @@ class LaunchFilesTests(unittest.TestCase):
         self.assertIn("http://127.0.0.1", text)
         self.assertIn("install/start Ollama on Windows and pull llama3.1:8b", text)
         self.assertIn("grep nameserver /etc/resolv.conf", text)
+        self.assertIn("COUNTGPT_FORCE_OLLAMA", text)
+        self.assertIn("countgpt_model", text)
 
     def test_entrypoint_bash_n(self):
         script = ROOT / "docker" / "entrypoint.sh"
