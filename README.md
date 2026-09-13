@@ -111,6 +111,8 @@ python -m unittest test_countgpt.py test_app.py
 python evals/run_retrieval_eval.py --dry-run
 python evals/run_retrieval_eval.py --fixture
 python evals/run_retrieval_eval.py          # real pickle; skips if missing
+python scripts/validate_training_data.py    # SFT JSONL parse + category floors
+python -m unittest test_training_data.py
 ```
 
 The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back — not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
@@ -121,12 +123,22 @@ Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.p
 
 1. **RAG over NIST SP 800-53 Rev 5** — official OSCAL catalog → cleaned controls → MiniLM embeddings → hybrid exact-ID + semantic retrieve → Llama 3.1 8B via Ollama, with draft disclaimers and source export.
 2. **Learning UI** — Guide glossary, teacher-style chat routing, Workbench tips (`static/field-help.json`), fictional scenarios (`static/scenarios.json`).
-3. **Optional QLoRA** — small `training_data.jsonl` fine-tune (Unsloth); not wired into the HTML UI yet. Needs CUDA:
+3. **Optional QLoRA** — `training_data.jsonl` has **300** instruction/output pairs (POA&M, SSP statements, RMF Q&A, SOC triage, STIG vs scan). Fine-tune with Unsloth is still optional and **not wired into the HTML UI** (Chat/Workbench keep using Ollama `llama3.1:8b` + RAG). Needs an NVIDIA GPU + CUDA:
 
 ```bash
 pip install -r requirements-finetune.txt
-python finetune.py
+python scripts/validate_training_data.py   # confirm JSONL before spending GPU time
+python finetune.py                         # writes countgpt_model/ (gitignored)
 python test_finetuned.py
+```
+
+`finetune.py` loads Llama 3.1 8B 4-bit, attaches LoRA (`r=16`), and runs 3 epochs at batch size 1 with gradient accumulation 4. A few hundred short examples is still a small job on a single modern GPU (often tens of minutes, not a multi-day run), but it will not start on CPU-only. Do not commit `countgpt_model/` or `training_output/`.
+
+To rebuild the JSONL from the example modules (after editing `scripts/sft_*.py`):
+
+```bash
+python scripts/build_training_data.py
+python scripts/validate_training_data.py
 ```
 
 **Stack:** Python 3.12, sentence-transformers, NumPy retrieval, Ollama, FastAPI + vanilla HTML/CSS/JS, optional Gradio, WSL2 on Windows.
@@ -134,7 +146,7 @@ python test_finetuned.py
 ## Honest limitations
 
 - Practice scenarios and drafts are for learning; not eMASS submissions.
-- ~25 fine-tune examples is too small to reliably change model behavior; hundreds would be next if LoRA returns.
+- The SFT file is now hundreds of public FedRAMP/DoD/NIST-style examples with placeholders — still small versus a production corpus, and LoRA is not auto-loaded by the HTML UI.
 - Fine-tuned weights are not in the chat path yet (base Llama + RAG).
 - No auth / multi-user hosting yet (static UI + `/api` can sit behind a reverse proxy later).
 
