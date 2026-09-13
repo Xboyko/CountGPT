@@ -53,13 +53,14 @@ Three pages in one local app:
 | Page | URL | Purpose |
 | --- | --- | --- |
 | **Guide** | `/guide` | Plain-English chapters + searchable glossary (SSP vs POA&M, roles, ACAS vs STIG, …) |
-| **Chat** | `/` | Ask NIST / process questions; grounded answers cite retrieved controls |
+| **Chat** | `/` | Ask NIST / process questions; grounded answers cite retrieved controls. Chat history is saved in this browser only (`localStorage`) — not on the server. |
 | **Workbench** | `/workbench` | Structured POA&M and SSP drafts, field help, fictional practice scenarios |
 
 Learning loop: read the Guide → ask Chat → load a practice scenario in Workbench → compare to “what good looks like.”
 
 ### What’s new / sophistication
 
+- **Redesigned UI + chat history on this device.** Slimmer Chat / Workbench / Guide shell, conversation-first Chat, and Sources in a drawer instead of a permanent side panel. Previous chats stay in the browser (`localStorage`) so you can reopen them after a reload. They are labeled **Saved on this device** and are not uploaded or stored on the server (the `/api/chat` call still sends only the usual short history window for the model).
 - **Citations you can check.** Chat and Workbench list the retrieved NIST controls with ID, title, score/source, and a short quote of the rule text. Inline chips such as `[AC-2]` jump to that card. If retrieval is empty or only weakly similar, the UI says so — no fake citations.
 - **MissionTracker walkthrough.** A fictional contractor DoD web app story in the Guide: roles, Monday ACAS High finding, what gets written, later SAR / AO / Continuous Monitoring, and a table of “real-life artifact → where it lives in CountGPT.”
 - **ACAS / CSV → POA&M rows.** On the Workbench POA&M form, paste scan lines or upload a simple CSV. The parser is a best-effort learning aid: it maps plugin, severity, host, and synopsis when they are present, never invents IDs or dates, and still waits for you to press Generate.

@@ -519,7 +519,9 @@
   function toggleSources(force) {
     const open = typeof force === "boolean" ? force : !els.sourcesPanel.classList.contains("open");
     els.sourcesPanel.classList.toggle("open", open);
+    els.sourcesPanel.setAttribute("aria-hidden", open ? "false" : "true");
     els.sourcesBackdrop.hidden = !open;
+    document.getElementById("btn-sources")?.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
   async function refreshHealth() {
@@ -726,6 +728,9 @@
     btn.addEventListener("click", () => toggleSources());
   });
   els.sourcesBackdrop.addEventListener("click", () => toggleSources(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") toggleSources(false);
+  });
 
   loadFieldHelp();
   loadScenarios();

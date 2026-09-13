@@ -24,10 +24,14 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/static/app.js", res.text)
         self.assertIn("/static/sources.js", res.text)
+        self.assertIn("/static/history.js", res.text)
         self.assertIn("/workbench", res.text)
         self.assertIn("/guide", res.text)
         self.assertIn("Chat", res.text)
         self.assertIn("Guide", res.text)
+        self.assertIn("Saved on this device", res.text)
+        self.assertIn("history-sidebar", res.text)
+        self.assertIn("New chat", res.text)
 
     def test_static_js_and_css(self):
         js = self.client.get("/static/app.js")
@@ -37,10 +41,25 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("/api/chat", js.text)
         self.assertIn("What is an SSP?", js.text)
         self.assertIn('params.get("q")', js.text)
+        self.assertIn("CountGPTHistory", js.text)
+        self.assertIn("chat-shell", css.text)
+        self.assertIn("history-pane", css.text)
         sources = self.client.get("/static/sources.js")
         self.assertEqual(sources.status_code, 200)
         self.assertIn("used_in_answer", sources.text)
         self.assertIn("cite-chip", sources.text)
+
+    def test_local_chat_history_is_device_only(self):
+        history = self.client.get("/static/history.js")
+        self.assertEqual(history.status_code, 200)
+        self.assertIn("localStorage", history.text)
+        self.assertIn("countgpt.chats.v1", history.text)
+        self.assertNotIn("/api/", history.text)
+        self.assertNotIn("fetch(", history.text)
+        app_js = self.client.get("/static/app.js")
+        self.assertIn('JSON.stringify({ message, history: pendingHistory })', app_js.text)
+        self.assertIn("upsertSession", app_js.text)
+        self.assertIn("deleteSession", app_js.text)
 
     def test_health_shape(self):
         res = self.client.get("/api/health")
@@ -199,6 +218,8 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("Draft / not assessor-validated", res.text)
         self.assertIn("/guide", res.text)
         self.assertIn("Guide", res.text)
+        self.assertIn("btn-sources", res.text)
+        self.assertIn("btn-export-md", res.text)
 
     def test_workbench_js_calls_poam_and_ssp(self):
         js = self.client.get("/static/workbench.js")
