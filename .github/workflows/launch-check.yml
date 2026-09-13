@@ -1,0 +1,19 @@
+name: Launch check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  launch-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n start.sh and entrypoint
+        run: |
+          bash -n start.sh
+          bash -n docker/entrypoint.sh
+      - name: docker compose config
+        run: docker compose -f docker-compose.yml config -q
+      - name: python unittest test_launch.py
+        run: python -m unittest test_launch.py

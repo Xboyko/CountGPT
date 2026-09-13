@@ -6,6 +6,46 @@ I built this to *learn* the domain — not to ship an official authorization pro
 
 **How it was built:** I used AI to help implement the code. My job was the compliance design (what to retrieve, how POA&M/SSP drafts should look, what beginners need explained), debugging the pipeline, and checking answers against public RMF/FedRAMP/DoD-style guidance.
 
+## One-command start
+
+This is a **local** site. You do not need a public domain, reverse proxy, or hosting. After start, open [http://127.0.0.1:7860](http://127.0.0.1:7860) on the same machine.
+
+**What is in this repo:** the FastAPI UI, NIST retrieval code, and (after first setup) MiniLM embeddings of the public 800-53 catalog.
+
+**What is not embedded:** Llama 3.1 8B weights (~4.9 GB). Those stay in [Ollama](https://ollama.com) as a service — either a host install that `./start.sh` talks to, or the `ollama` service in Compose. This is not a single fat binary.
+
+### Option A — `./start.sh` (WSL / Linux / macOS)
+
+```bash
+./start.sh
+```
+
+Creates/activates `venv`, runs `setup_data.py` if `rules_with_embeddings.pkl` is missing, finds Ollama (including WSL → Windows via `/etc/resolv.conf`), pulls `llama3.1:8b` when the `ollama` CLI is available, then serves the UI.
+
+Windows PowerShell (this project’s venv is usually WSL):
+
+```powershell
+.\start.ps1
+```
+
+`start.ps1` prefers `wsl -e bash start.sh`. Reload while editing: `START_RELOAD=1 ./start.sh`.
+
+### Option B — Docker Compose
+
+Needs roughly **8–16 GB RAM** and **~10+ GB disk** (8B model + embeddings + image).
+
+```bash
+docker compose up --build
+```
+
+First run waits for Ollama, builds the pickle if needed, and pulls `llama3.1:8b`. Manual equivalent:
+
+```bash
+docker compose exec ollama ollama pull llama3.1:8b
+```
+
+Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
+
 ## What you get
 
 Three pages in one local app:
@@ -25,9 +65,9 @@ Learning loop: read the Guide → ask Chat → load a practice scenario in Workb
 - **ACAS / CSV → POA&M rows.** On the Workbench POA&M form, paste scan lines or upload a simple CSV. The parser is a best-effort learning aid: it maps plugin, severity, host, and synopsis when they are present, never invents IDs or dates, and still waits for you to press Generate.
 - **Retrieval evals.** `evals/retrieval_cases.json` plus `python evals/run_retrieval_eval.py` score the index (hit-rate / precision-at-k), not the model’s prose.
 
-## Quick start
+## Manual start (same pieces, by hand)
 
-**Requirements:** Python 3.10–3.12, [Ollama](https://ollama.com), disk for MiniLM + `llama3.1:8b`.
+**Requirements:** Python 3.10–3.12, [Ollama](https://ollama.com), disk for MiniLM + `llama3.1:8b`. Prefer `./start.sh` unless you want each step explicit.
 
 ```bash
 cd CountGPT
@@ -49,7 +89,7 @@ Optional: `python chat_gradio.py` (legacy Gradio), `python ask_chatbot.py` (CLI)
 
 ### WSL + Ollama on Windows
 
-If the app runs in WSL and Ollama on Windows, point at the Windows host before starting uvicorn:
+`./start.sh` sets this automatically. If you start uvicorn yourself and the app runs in WSL with Ollama on Windows, point at the Windows host first:
 
 ```bash
 export OLLAMA_HOST=http://$(grep -m1 nameserver /etc/resolv.conf | awk '{print $2}'):11434
@@ -62,6 +102,8 @@ uvicorn app:app --reload --host 0.0.0.0 --port 7860
 ### Checks
 
 ```bash
+bash -n start.sh
+python -m unittest test_launch.py
 python setup_data.py --check
 python retrieve.py
 python -m unittest test_countgpt.py test_app.py

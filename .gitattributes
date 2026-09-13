@@ -1,0 +1,4 @@
+# Keep launch scripts Unix-lined so WSL/bash is not broken by CRLF checkouts.
+start.sh text eol=lf
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf
