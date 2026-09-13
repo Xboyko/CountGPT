@@ -97,8 +97,9 @@ export OLLAMA_HOST=http://$(grep -m1 nameserver /etc/resolv.conf | awk '{print $
 uvicorn app:app --reload --host 0.0.0.0 --port 7860
 ```
 
-`GET /api/health` shows whether the NIST store loaded and whether Ollama is reachable.  
-`COUNTGPT_DRY_RUN=1` skips the model call (UI checks without Llama).
+`GET /api/health` shows whether the NIST store loaded, whether Ollama is reachable, and whether a local LoRA adapter is available or already loaded.  
+`COUNTGPT_DRY_RUN=1` skips the model call (UI checks without Llama).  
+`COUNTGPT_FORCE_OLLAMA=1` keeps drafting on Ollama even if `countgpt_model/` is present.
 
 ### Checks
 
@@ -107,7 +108,7 @@ bash -n start.sh
 python -m unittest test_launch.py
 python setup_data.py --check
 python retrieve.py
-python -m unittest test_countgpt.py test_app.py
+python -m unittest test_countgpt.py test_app.py test_lora.py
 python evals/run_retrieval_eval.py --dry-run
 python evals/run_retrieval_eval.py --fixture
 python evals/run_retrieval_eval.py          # real pickle; skips if missing
@@ -121,9 +122,9 @@ Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.p
 
 ## What's under the hood
 
-1. **RAG over NIST SP 800-53 Rev 5** — official OSCAL catalog → cleaned controls → MiniLM embeddings → hybrid exact-ID + semantic retrieve → Llama 3.1 8B via Ollama, with draft disclaimers and source export.
+1. **RAG over NIST SP 800-53 Rev 5** — official OSCAL catalog → cleaned controls → MiniLM embeddings → hybrid exact-ID + semantic retrieve → Llama 3.1 8B via Ollama for lookup/explain, with draft disclaimers and source export. Drafting uses the same retrieve step, then the optional local LoRA adapter when `countgpt_model/` is present and CUDA is available.
 2. **Learning UI** — Guide glossary, teacher-style chat routing, Workbench tips (`static/field-help.json`), fictional scenarios (`static/scenarios.json`).
-3. **Optional QLoRA** — `training_data.jsonl` has **300** instruction/output pairs (POA&M, SSP statements, RMF Q&A, SOC triage, STIG vs scan). Fine-tune with Unsloth is still optional and **not wired into the HTML UI** (Chat/Workbench keep using Ollama `llama3.1:8b` + RAG). Needs an NVIDIA GPU + CUDA:
+3. **Optional QLoRA for drafting** — `training_data.jsonl` has **300** instruction/output pairs (POA&M, SSP statements, RMF Q&A, SOC triage, STIG vs scan). After `finetune.py` writes `countgpt_model/` (gitignored), **drafting** uses that local adapter when CUDA is available. **Lookup and explain** stay on Ollama `llama3.1:8b` + NIST retrieve. Needs an NVIDIA GPU + CUDA to train and to serve the adapter:
 
 ```bash
 pip install -r requirements-finetune.txt
@@ -131,6 +132,21 @@ python scripts/validate_training_data.py   # confirm JSONL before spending GPU t
 python finetune.py                         # writes countgpt_model/ (gitignored)
 python test_finetuned.py
 ```
+
+Then restart the app. Chat drafting mode (POA&M, SSP/CIS, “write a…”) and Workbench `/api/poam` + `/api/ssp` generate with the LoRA model. The same NIST retrieve step still runs first; retrieved control text, placeholders such as `[System Name]`, and the draft-caveat instructions are injected into the LoRA prompt. Glossary / “what does AC-2 require?” questions keep using Ollama + RAG.
+
+| Task | Backend |
+| --- | --- |
+| Lookup / explain (Chat) | Ollama `llama3.1:8b` + retrieve |
+| Drafting (Chat POA&M / SSP / CIS) | LoRA adapter if present + CUDA; else Ollama |
+| Workbench POA&M / SSP | LoRA adapter if present + CUDA; else Ollama |
+
+Environment:
+
+- `COUNTGPT_LORA_PATH` — adapter directory (default: `countgpt_model` next to the app).
+- `COUNTGPT_FORCE_OLLAMA=1` — disable LoRA and keep drafts on Ollama too.
+
+If the adapter is missing, CUDA is unavailable, Unsloth cannot load, or generate fails, CountGPT logs the reason and falls back to Ollama for drafts. `GET /api/health` reports `lora.available` and `lora.loaded`.
 
 `finetune.py` loads Llama 3.1 8B 4-bit, attaches LoRA (`r=16`), and runs 3 epochs at batch size 1 with gradient accumulation 4. A few hundred short examples is still a small job on a single modern GPU (often tens of minutes, not a multi-day run), but it will not start on CPU-only. Do not commit `countgpt_model/` or `training_output/`.
 
@@ -146,8 +162,7 @@ python scripts/validate_training_data.py
 ## Honest limitations
 
 - Practice scenarios and drafts are for learning; not eMASS submissions.
-- The SFT file is now hundreds of public FedRAMP/DoD/NIST-style examples with placeholders — still small versus a production corpus, and LoRA is not auto-loaded by the HTML UI.
-- Fine-tuned weights are not in the chat path yet (base Llama + RAG).
+- The SFT file is now hundreds of public FedRAMP/DoD/NIST-style examples with placeholders — still small versus a production corpus. Drafting will use `countgpt_model/` when that folder exists and CUDA is available; lookup stays on base Llama + RAG.
 - No auth / multi-user hosting yet (static UI + `/api` can sit behind a reverse proxy later).
 
 ## Why I built this

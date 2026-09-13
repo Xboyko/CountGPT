@@ -322,6 +322,17 @@
                 Learning questions (what is an SSP, who is the ISSO) are answered
                 as teaching, not as official policy.
               </p>
+              <p>
+                Lookup and explain stay on the local Ollama model
+                (<code>llama3.1:8b</code>) plus retrieved NIST text. After you run
+                <code>finetune.py</code>, drafting (Chat “write a POA&amp;M / SSP”
+                and Workbench Generate) uses the saved
+                <code>countgpt_model/</code> LoRA adapter when a GPU is available.
+                The same retrieved controls, placeholders, and “draft / not
+                assessor-validated” instructions are still injected. If the
+                adapter is missing or CUDA is not available, drafts fall back to
+                Ollama too.
+              </p>
             </section>
             <section>
               <h3>Always review</h3>

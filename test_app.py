@@ -39,6 +39,7 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(js.status_code, 200)
         self.assertEqual(css.status_code, 200)
         self.assertIn("/api/chat", js.text)
+        self.assertIn("loraHealthNote", js.text)
         self.assertIn("What is an SSP?", js.text)
         self.assertIn('params.get("q")', js.text)
         self.assertIn("CountGPTHistory", js.text)
@@ -71,6 +72,11 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("dry_run", data)
         self.assertEqual(data["model"], "llama3.1:8b")
         self.assertIn("host", data["ollama"])
+        self.assertIn("lora", data)
+        self.assertIn("loaded", data["lora"])
+        self.assertIn("available", data["lora"])
+        self.assertIn("path", data["lora"])
+        self.assertIn("force_ollama", data["lora"])
 
     def test_chat_requires_message(self):
         res = self.client.post("/api/chat", json={"message": "  ", "history": []})
@@ -101,9 +107,10 @@ class AppApiTests(unittest.TestCase):
             }
         ]
 
-        def fake_generate(question, history):
+        def fake_generate(question, history, *, retrieve_query=None, drafting=None):
             self.assertEqual(question, "What does AC-2 require?")
             self.assertEqual(history, [{"role": "user", "content": "hi"}])
+            self.assertFalse(drafting)
             return "AC-2 covers account management.", matches
 
         with patch.object(countgpt, "STORE_OK", True), patch.object(
@@ -227,6 +234,7 @@ class AppApiTests(unittest.TestCase):
         self.assertIn("/api/poam", js.text)
         self.assertIn("/api/ssp", js.text)
         self.assertIn("/api/parse-findings", js.text)
+        self.assertIn("loraHealthNote", js.text)
 
     def test_poam_requires_finding(self):
         missing = self.client.post("/api/poam", json={"severity": "High"})

@@ -262,10 +262,11 @@ class WorkbenchPromptTests(unittest.TestCase):
         ]
         captured = {}
 
-        def fake_generate(question, history, *, retrieve_query=None):
+        def fake_generate(question, history, *, retrieve_query=None, drafting=None):
             captured["question"] = question
             captured["history"] = history
             captured["retrieve_query"] = retrieve_query
+            captured["drafting"] = drafting
             return "Weakness: Weak TLS on WebPortal.", matches
 
         with patch.object(countgpt, "generate_answer", side_effect=fake_generate):
@@ -282,6 +283,7 @@ class WorkbenchPromptTests(unittest.TestCase):
         self.assertEqual(result["meta"]["mode"], "poam")
         self.assertEqual(result["meta"]["severity_timeline_days"], 30)
         self.assertEqual(captured["retrieve_query"], "SC-8 Weak TLS cipher")
+        self.assertTrue(captured["drafting"])
         self.assertIn("Draft a POA&M", captured["question"])
         self.assertEqual(result["matches"][0]["id"], "SC-8")
         self.assertIn("snippet", result["matches"][0])
