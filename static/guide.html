@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -8,7 +8,7 @@
       name="description"
       content="Beginner guide to CountGPT, NIST 800-53, RMF documents, and ISSO terms."
     />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260913" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -34,13 +34,13 @@
           <a href="/guide" class="nav-link active" aria-current="page">Guide</a>
         </nav>
         <div class="top-actions">
-          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+          <span id="health-pill" class="pill pill-unknown" title="Checking backendâ€¦">Checking</span>
         </div>
       </header>
 
       <p class="disclaimer" role="note">
         <strong>Draft / not assessor-validated.</strong>
-        Study aid only — not official policy, not an ATO, and not eMASS.
+        Study aid only â€” not official policy, not an ATO, and not eMASS.
       </p>
 
       <div class="workspace guide-workspace">
@@ -83,8 +83,8 @@
               <p>
                 Use <a href="/">Chat</a> to look up a rule or ask what a term
                 means. Use the <a href="/workbench">Workbench</a> when you want a
-                structured draft of a fix-list item or a “how we protect this
-                system” paragraph.
+                structured draft of a fix-list item or a â€œhow we protect this
+                systemâ€ paragraph.
               </p>
               <p>
                 Treat every answer as homework, not as a finished package. If the
@@ -108,7 +108,7 @@
               <p>
                 Each rule is called a
                 <button type="button" class="term-chip" data-term="control">control</button>.
-                A control is a specific thing you must do to protect a system —
+                A control is a specific thing you must do to protect a system â€”
                 for example, manage user accounts, or keep logs of important
                 events.
               </p>
@@ -137,15 +137,15 @@
               <h3>Permission to operate</h3>
               <p>
                 Before many government systems are allowed to run, someone with
-                authority has to say “yes, the leftover risk is acceptable.” That
+                authority has to say â€œyes, the leftover risk is acceptable.â€ That
                 written permission is an
                 <button type="button" class="term-chip" data-term="ato">ATO</button>
-                — Authority to Operate.
+                â€” Authority to Operate.
               </p>
               <p>
                 The process used to get there is the
                 <button type="button" class="term-chip" data-term="rmf">RMF</button>
-                — Risk Management Framework. CountGPT can help you practice the
+                â€” Risk Management Framework. CountGPT can help you practice the
                 writing and lookup parts. It does not grant an ATO.
               </p>
             </section>
@@ -168,26 +168,26 @@
             <section>
               <h3>Three documents that travel together</h3>
               <p>
-                These three papers usually sit in the same authorization package —
+                These three papers usually sit in the same authorization package â€”
                 the folder of evidence used to ask for permission to operate.
               </p>
               <p>
                 The
                 <button type="button" class="term-chip" data-term="ssp">SSP</button>
-                (System Security Plan) is the “how we protect this system” story.
+                (System Security Plan) is the â€œhow we protect this systemâ€ story.
                 For each rule, it says what is in place today.
               </p>
               <p>
                 The
                 <button type="button" class="term-chip" data-term="poam">POA&amp;M</button>
-                (Plan of Action and Milestones) is the “what is still broken, and
-                when we will fix it” list. Each item has an owner, a due date, and
+                (Plan of Action and Milestones) is the â€œwhat is still broken, and
+                when we will fix itâ€ list. Each item has an owner, a due date, and
                 a status.
               </p>
               <p>
                 The
                 <button type="button" class="term-chip" data-term="sar">SAR</button>
-                (Security Assessment Report) is the “what testers found” report.
+                (Security Assessment Report) is the â€œwhat testers foundâ€ report.
                 Independent reviewers write what passed, what failed, and how
                 serious each miss is.
               </p>
@@ -252,7 +252,7 @@
               </p>
             </section>
             <section>
-              <h3>Common practice — not universal law</h3>
+              <h3>Common practice â€” not universal law</h3>
               <p>
                 A common
                 <button type="button" class="term-chip" data-term="fedramp">FedRAMP</button>
@@ -289,15 +289,15 @@
                 A
                 <button type="button" class="term-chip" data-term="stig">STIG</button>
                 (Security Technical Implementation Guide) is a configuration
-                checklist. It says how a product should be set up — which settings
+                checklist. It says how a product should be set up â€” which settings
                 should be on or off.
               </p>
             </section>
             <section>
               <h3>Do not mix them up in a write-up</h3>
               <p>
-                A scan finding (“this software version has a known hole”) is
-                different from a STIG finding (“this setting is not hardened”).
+                A scan finding (â€œthis software version has a known holeâ€) is
+                different from a STIG finding (â€œthis setting is not hardenedâ€).
                 Both can become POA&amp;M items. When you describe the weakness,
                 say which kind of check produced it, and do not invent a plugin
                 number you do not have.
@@ -339,7 +339,7 @@
             <p class="fictional-flag">
               <strong>Fictional / for learning.</strong>
               MissionTracker is a made-up contractor web app. The people, scan
-              hit, and dates below are practice data — not a real network and
+              hit, and dates below are practice data â€” not a real network and
               not assessor-validated.
             </p>
             <section>
@@ -351,7 +351,7 @@
                 <button type="button" class="term-chip" data-term="authorization-boundary">authorization boundary</button>
                 that already has an
                 <button type="button" class="term-chip" data-term="ato">ATO</button>
-                — written permission to operate. The
+                â€” written permission to operate. The
                 <button type="button" class="term-chip" data-term="isso">ISSO</button>
                 (Alex Rivera) does the day-to-day paperwork. The
                 <button type="button" class="term-chip" data-term="issm">ISSM</button>
@@ -378,7 +378,7 @@
                 <button type="button" class="term-chip" data-term="nessus">Nessus</button>
                 scan of the public login page reports a High finding: the
                 server still allows a weak TLS cipher. Common practice clocks
-                treat High as about 30 days from discovery — not from “today,”
+                treat High as about 30 days from discovery â€” not from â€œtoday,â€
                 and not a law that every agency must use.
               </p>
               <p>
@@ -401,8 +401,8 @@
                 sit next to this story are
                 <code>SC-8</code> (protect data in transit) and sometimes
                 <code>SC-13</code> (use approved cryptography). If the SSP
-                paragraph for those rules still says “we only allow modern
-                TLS,” that paragraph needs a note or a planned edit — the SSP
+                paragraph for those rules still says â€œwe only allow modern
+                TLS,â€ that paragraph needs a note or a planned edit â€” the SSP
                 should not pretend the hole is already gone.
               </p>
               <p>
@@ -420,12 +420,12 @@
               <p>
                 Months later testers write a
                 <button type="button" class="term-chip" data-term="sar">SAR</button>
-                — what they checked, what passed, what is still open. The AO
+                â€” what they checked, what passed, what is still open. The AO
                 reads leftover risk and either keeps, limits, or stops the ATO.
                 After the system is live,
                 <button type="button" class="term-chip" data-term="continuous-monitoring">Continuous Monitoring</button>
                 continues: new scans, updated POA&amp;M items, honest SSP
-                edits. An ATO is not “set and forget.”
+                edits. An ATO is not â€œset and forget.â€
               </p>
               <a class="try-chat" href="/?q=What%20is%20Continuous%20Monitoring%20after%20an%20ATO%3F">Try in Chat: Continuous Monitoring</a>
             </section>
@@ -450,19 +450,19 @@
                   </tr>
                   <tr>
                     <td>Look up SC-8 / High fix clocks</td>
-                      <td><a href="/?q=What%20does%20SC-8%20require%3F">Chat</a> · Sources quotes the retrieved rule</td>
+                      <td><a href="/?q=What%20does%20SC-8%20require%3F">Chat</a> Â· Sources quotes the retrieved rule</td>
                   </tr>
                   <tr>
                     <td>Monday ACAS High weak-cipher POA&amp;M</td>
-                    <td><a href="/workbench?scenario=missiontracker-acas-high">Workbench · MissionTracker scenario</a></td>
+                    <td><a href="/workbench?scenario=missiontracker-acas-high">Workbench Â· MissionTracker scenario</a></td>
                   </tr>
                   <tr>
                     <td>Paste a scan line or CSV into a draft row</td>
-                    <td>Workbench POA&amp;M → “Paste ACAS / Nessus findings or CSV”</td>
+                    <td>Workbench POA&amp;M â†’ â€œPaste ACAS / Nessus findings or CSVâ€</td>
                   </tr>
                   <tr>
                     <td>How-we-do-MFA SSP paragraph</td>
-                    <td><a href="/workbench?scenario=ssp-ia2-mfa">Workbench · IA-2 scenario</a></td>
+                    <td><a href="/workbench?scenario=ssp-ia2-mfa">Workbench Â· IA-2 scenario</a></td>
                   </tr>
                   <tr>
                     <td>Official eMASS package / AO signature</td>
@@ -480,17 +480,17 @@
               <p>
                 These cases are labeled <strong>Practice / fictional</strong>.
                 They are not real systems. Each one prefills the Workbench form
-                so you can write a draft, then compare it to a short “what good
-                looks like” list. Nothing is sent to the model until you press
+                so you can write a draft, then compare it to a short â€œwhat good
+                looks likeâ€ list. Nothing is sent to the model until you press
                 Generate.
               </p>
               <p>
                 Open a card to jump to
-                <code>/workbench?scenario=…</code>. Use field help (“Why this
-                field?”) if a box is new to you.
+                <code>/workbench?scenario=â€¦</code>. Use field help (â€œWhy this
+                field?â€) if a box is new to you.
               </p>
             </section>
-            <p id="practice-status" class="sources-empty">Loading practice scenarios…</p>
+            <p id="practice-status" class="sources-empty">Loading practice scenariosâ€¦</p>
             <div id="practice-list" class="practice-list"></div>
           </article>
 
@@ -505,17 +505,17 @@
               <input
                 id="glossary-search"
                 type="search"
-                placeholder="Search terms — SSP, POA&amp;M, ISSO…"
+                placeholder="Search terms â€” SSP, POA&amp;M, ISSOâ€¦"
                 autocomplete="off"
               />
             </label>
-            <p id="glossary-status" class="sources-empty">Loading glossary…</p>
+            <p id="glossary-status" class="sources-empty">Loading glossaryâ€¦</p>
             <div id="glossary-list" class="glossary-list"></div>
           </article>
         </main>
       </div>
     </div>
 
-    <script src="/static/guide.js"></script>
+    <script src="/static/guide.js?v=20260913"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -8,7 +8,7 @@
       name="description"
       content="POA&amp;M and SSP implementation-statement workbench for CountGPT."
     />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260913" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -34,13 +34,13 @@
           <a href="/guide" class="nav-link">Guide</a>
         </nav>
         <div class="top-actions">
-          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+          <span id="health-pill" class="pill pill-unknown" title="Checking backendâ€¦">Checking</span>
         </div>
       </header>
 
       <p class="disclaimer" role="note">
         <strong>Draft / not assessor-validated.</strong>
-        Learning only — not an ATO. The model will not invent plugin IDs, dates, or tools you did not provide.
+        Learning only â€” not an ATO. The model will not invent plugin IDs, dates, or tools you did not provide.
       </p>
 
       <div class="workspace workbench-workspace">
@@ -50,11 +50,11 @@
               <div class="field">
                 <span class="field-label" id="scenario-select-label">Load practice scenario</span>
                 <select id="scenario-select" aria-labelledby="scenario-select-label">
-                  <option value="">Choose a practice scenario…</option>
+                  <option value="">Choose a practice scenarioâ€¦</option>
                 </select>
               </div>
               <div id="scenario-banner" class="scenario-banner hidden" role="status">
-                <p class="practice-flag"><strong>Practice / fictional</strong> — not a real system.</p>
+                <p class="practice-flag"><strong>Practice / fictional</strong> â€” not a real system.</p>
                 <p id="scenario-title" class="scenario-title"></p>
                 <p id="scenario-goal" class="scenario-goal"></p>
                 <p id="scenario-links" class="scenario-links"></p>
@@ -72,7 +72,7 @@
 
             <form id="form-poam" class="wb-form">
               <p class="form-lead">
-                Fill what you know. Leave blanks — the draft keeps placeholders
+                Fill what you know. Leave blanks â€” the draft keeps placeholders
                 instead of inventing scanner IDs or dates. Use
                 <strong>Why?</strong> if a field is new to you.
               </p>
@@ -83,14 +83,14 @@
                   <strong>Best-effort / learning aid.</strong>
                   Maps plugin, name, severity, host, and synopsis when they are
                   in the paste. Does not invent plugin IDs or dates. Select a
-                  row to fill the form — you still press Generate for a draft.
+                  row to fill the form â€” you still press Generate for a draft.
                 </p>
                 <label class="field">
                   <span class="sr-only">Paste findings</span>
                   <textarea
                     id="findings-paste"
                     rows="5"
-                    placeholder="Paste scan lines or CSV (plugin, name, severity, host, synopsis)…"
+                    placeholder="Paste scan lines or CSV (plugin, name, severity, host, synopsis)â€¦"
                   ></textarea>
                 </label>
                 <div class="form-actions findings-actions">
@@ -106,9 +106,9 @@
 
               <div class="preset-row" aria-label="Templates">
                 <span class="preset-label">Templates</span>
-                <button type="button" class="chip preset" data-preset="high">High · 30d</button>
-                <button type="button" class="chip preset" data-preset="moderate">Moderate · 90d</button>
-                <button type="button" class="chip preset" data-preset="low">Low · 180d</button>
+                <button type="button" class="chip preset" data-preset="high">High Â· 30d</button>
+                <button type="button" class="chip preset" data-preset="moderate">Moderate Â· 90d</button>
+                <button type="button" class="chip preset" data-preset="low">Low Â· 180d</button>
                 <button type="button" class="chip preset" data-preset="fp">False Positive / RA</button>
               </div>
 
@@ -171,7 +171,7 @@
                     <label for="poam-detector">Detector source</label>
                     <button type="button" class="field-help-btn" data-help="poam.detector_source" aria-label="Why this field?" title="Why this field?">?</button>
                   </span>
-                  <input id="poam-detector" name="detector_source" type="text" list="detector-list" placeholder="ACAS/Nessus, STIG, 3PAO…" />
+                  <input id="poam-detector" name="detector_source" type="text" list="detector-list" placeholder="ACAS/Nessus, STIG, 3PAOâ€¦" />
                   <datalist id="detector-list">
                     <option value="ACAS/Nessus"></option>
                     <option value="Nessus"></option>
@@ -222,7 +222,7 @@
                     <label for="poam-vendor-notes">Vendor notes</label>
                     <button type="button" class="field-help-btn" data-help="poam.vendor_notes" aria-label="Why this field?" title="Why this field?">?</button>
                   </span>
-                  <input id="poam-vendor-notes" name="vendor_notes" type="text" placeholder="Patch ETA, ticket, constraint…" />
+                  <input id="poam-vendor-notes" name="vendor_notes" type="text" placeholder="Patch ETA, ticket, constraintâ€¦" />
                 </div>
               </div>
 
@@ -333,7 +333,7 @@
       <div class="sources-head">
         <h2>Sources</h2>
         <span id="sources-mode" class="mode-tag hidden"></span>
-        <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">×</button>
+        <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">Ã—</button>
       </div>
       <p id="sources-status" class="sources-status" hidden></p>
       <p id="sources-empty" class="sources-empty">
@@ -348,7 +348,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
-    <script src="/static/sources.js"></script>
-    <script src="/static/workbench.js"></script>
+    <script src="/static/sources.js?v=20260913"></script>
+    <script src="/static/workbench.js?v=20260913"></script>
   </body>
 </html>

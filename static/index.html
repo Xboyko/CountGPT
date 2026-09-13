@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -8,7 +8,7 @@
       name="description"
       content="Local NIST SP 800-53 assistant for control lookup and POA&amp;M drafting."
     />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260913" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -35,13 +35,13 @@
         </nav>
         <div class="top-actions">
           <button type="button" id="btn-history-open" class="btn ghost history-open">Chats</button>
-          <span id="health-pill" class="pill pill-unknown" title="Checking backend…">Checking</span>
+          <span id="health-pill" class="pill pill-unknown" title="Checking backendâ€¦">Checking</span>
         </div>
       </header>
 
       <p class="disclaimer" role="note">
         <strong>Draft / not assessor-validated.</strong>
-        Learning only — not an ATO or eMASS artifact.
+        Learning only â€” not an ATO or eMASS artifact.
       </p>
 
       <div id="chat-shell" class="chat-shell">
@@ -51,8 +51,8 @@
               <h2>Chats</h2>
               <p class="history-hint">Saved on this device</p>
             </div>
-            <button type="button" id="btn-history-close" class="btn icon history-close" aria-label="Hide chat history">×</button>
-            <button type="button" id="btn-history-expand" class="btn icon history-expand" aria-label="Show chat history">›</button>
+            <button type="button" id="btn-history-close" class="btn icon history-close" aria-label="Hide chat history">Ã—</button>
+            <button type="button" id="btn-history-expand" class="btn icon history-expand" aria-label="Show chat history">â€º</button>
           </div>
           <button type="button" id="btn-new" class="btn primary history-new">New chat</button>
           <nav id="history-list" class="history-list" aria-label="Saved chats"></nav>
@@ -66,7 +66,7 @@
             <textarea
               id="input"
               rows="1"
-              placeholder="Ask about a control (e.g. What does AC-2 require?) or draft a POA&amp;M…"
+              placeholder="Ask about a control (e.g. What does AC-2 require?) or draft a POA&amp;Mâ€¦"
               autocomplete="off"
             ></textarea>
             <div class="composer-actions">
@@ -86,7 +86,7 @@
       <div class="sources-head">
         <h2>Sources</h2>
         <span id="sources-mode" class="mode-tag hidden"></span>
-        <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">×</button>
+        <button type="button" id="btn-close-sources" class="btn icon sources-toggle" aria-label="Close sources">Ã—</button>
       </div>
       <p id="sources-status" class="sources-status" hidden></p>
       <p id="sources-empty" class="sources-empty">
@@ -101,8 +101,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
-    <script src="/static/sources.js"></script>
-    <script src="/static/history.js"></script>
-    <script src="/static/app.js"></script>
+    <script src="/static/sources.js?v=20260913"></script>
+    <script src="/static/history.js?v=20260913"></script>
+    <script src="/static/app.js?v=20260913"></script>
   </body>
 </html>
