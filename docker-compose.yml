@@ -1,0 +1,50 @@
+# CountGPT local stack — no public domain or hosting.
+#
+# First run (plan ~8–16 GB RAM and ~10+ GB disk for llama3.1:8b + MiniLM):
+#   docker compose up --build
+# The countgpt entrypoint waits for Ollama, builds embeddings if needed,
+# and pulls llama3.1:8b when missing. Manual equivalent:
+#   docker compose exec ollama ollama pull llama3.1:8b
+#
+# Llama weights are NOT in the CountGPT image. They live in the ollama volume.
+#
+# Optional: reuse a host-built pickle instead of running setup_data in the
+# container (uncomment the bind mount under countgpt.volumes).
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+
+  countgpt:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      COUNTGPT_DATA_DIR: /data
+      # Set to 1 to skip the automatic llama3.1:8b pull (then exec pull yourself).
+      # COUNTGPT_SKIP_OLLAMA_PULL: "1"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      # Persist NIST JSON + rules_with_embeddings.pkl across container recreates.
+      - countgpt_data:/data
+      # Uncomment to mount a prebuilt pickle from the host (skip setup_data):
+      # - ./rules_with_embeddings.pkl:/app/rules_with_embeddings.pkl:ro
+
+volumes:
+  ollama_models:
+  countgpt_data:

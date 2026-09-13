@@ -1,0 +1,14 @@
+venv/
+.git/
+.github/
+__pycache__/
+*.pyc
+.gradio/
+countgpt_model/
+training_output/
+unsloth_compiled_cache/
+.env
+.DS_Store
+Thumbs.db
+*.md
+!README.md
