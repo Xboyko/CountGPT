@@ -150,7 +150,7 @@ h1 {
   margin: 0;
   padding: 5px 20px;
   background: transparent;
-  color: var(--muted);
+  color: #a8b0bb;
   border-bottom: 1px solid var(--line);
   font-size: 0.78rem;
   line-height: 1.4;
@@ -1200,6 +1200,18 @@ h1 {
   margin-top: 4px;
 }
 
+.wb-form > .form-actions {
+  position: sticky;
+  bottom: -20px;
+  padding: 12px 0 4px;
+  background: #10171f;
+  z-index: 1;
+}
+
+.wb-form > .form-actions .btn.primary {
+  min-width: 140px;
+}
+
 .draft-head {
   display: flex;
   align-items: center;
@@ -1582,5 +1594,9 @@ h1 {
 
   .top-actions {
     margin-left: auto;
+  }
+
+  .composer-actions .btn.ghost:disabled {
+    display: none;
   }
 }
