@@ -127,28 +127,39 @@ fi
 
 # --- Ollama host ------------------------------------------------------------
 # Prefer an explicit OLLAMA_HOST, then localhost, then WSL → Windows host.
+# On modern WSL, /etc/resolv.conf is often NOT the Hyper-V host that serves
+# Windows Ollama; the default gateway (e.g. 172.x.x.1) usually is.
 if [[ -n "${OLLAMA_HOST:-}" ]]; then
   echo "Using OLLAMA_HOST from the environment: ${OLLAMA_HOST}"
 else
-  if probe_ollama "http://127.0.0.1:11434"; then
-    export OLLAMA_HOST="http://127.0.0.1:11434"
+  export OLLAMA_HOST="http://127.0.0.1:11434"
+  if probe_ollama "${OLLAMA_HOST}"; then
     echo "Ollama is reachable on localhost:11434"
   elif is_wsl; then
-    WSL_DNS="$(grep nameserver /etc/resolv.conf | awk '{print $2; exit}')"
-    if [[ -z "${WSL_DNS}" ]]; then
-      warn "WSL detected but no nameserver in /etc/resolv.conf"
-      export OLLAMA_HOST="http://127.0.0.1:11434"
-    else
-      export OLLAMA_HOST="http://${WSL_DNS}:11434"
-      echo "WSL detected — probing Windows Ollama at ${OLLAMA_HOST}"
-      if probe_ollama "${OLLAMA_HOST}"; then
-        echo "Ollama is reachable via the WSL nameserver host"
-      else
-        warn "No Ollama at ${OLLAMA_HOST}. Start Ollama on Windows and keep this OLLAMA_HOST."
+    CANDIDATES=()
+    while read -r gw; do
+      [[ -n "$gw" ]] && CANDIDATES+=("$gw")
+    done < <(ip route 2>/dev/null | awk '/^default/ {print $3}')
+    while read -r ns; do
+      [[ -n "$ns" ]] && CANDIDATES+=("$ns")
+    done < <(grep nameserver /etc/resolv.conf 2>/dev/null | awk '{print $2}')
+
+    FOUND=""
+    for ip in "${CANDIDATES[@]}"; do
+      candidate="http://${ip}:11434"
+      echo "WSL — probing Windows Ollama at ${candidate}"
+      if probe_ollama "${candidate}"; then
+        export OLLAMA_HOST="${candidate}"
+        FOUND=1
+        echo "Ollama is reachable at ${OLLAMA_HOST}"
+        break
       fi
+    done
+    if [[ -z "${FOUND}" ]]; then
+      warn "No Ollama reachable from WSL. Start Ollama on Windows, then re-run."
+      warn "Manual override: export OLLAMA_HOST=http://<Windows-host-IP>:11434"
     fi
   else
-    export OLLAMA_HOST="http://127.0.0.1:11434"
     warn "Ollama is not answering at ${OLLAMA_HOST}. Start it, then refresh /api/health."
   fi
 fi
