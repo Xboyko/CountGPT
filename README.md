@@ -6,6 +6,28 @@ I built this to *learn* the domain — not to ship an official authorization pro
 
 **How it was built:** I used AI to help implement the code. My job was the compliance design (what to retrieve, how POA&M/SSP drafts should look, what beginners need explained), debugging the pipeline, and checking answers against public RMF/FedRAMP/DoD-style guidance.
 
+## Demo
+
+Screenshots and a short walkthrough of the local UI (Chat, Guide, Workbench). Recruiters: you do not need to install anything — these show what the app looks like on a running machine. For a live walkthrough I can screen-share.
+
+![Chat](docs/demo/01-chat.png)
+
+![Chat with Sources](docs/demo/02-chat-sources.png)
+
+![Guide](docs/demo/03-guide.png)
+
+![MissionTracker chapter](docs/demo/04-guide-missiontracker.png)
+
+![Workbench](docs/demo/05-workbench.png)
+
+![Workbench practice scenario](docs/demo/06-workbench-scenario.png)
+
+![Chat answer with citations](docs/demo/07-chat-answer.png)
+
+**Walkthrough video:** [docs/demo/countgpt-demo.mp4](docs/demo/countgpt-demo.mp4) (slideshow of the pages above).
+
+
+
 ## One-command start
 
 This is a **local** site. You do not need a public domain, reverse proxy, or hosting. After start, open [http://127.0.0.1:7860](http://127.0.0.1:7860) on the same machine.
