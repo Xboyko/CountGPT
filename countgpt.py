@@ -1,6 +1,6 @@
 """Shared CountGPT brain: draft/lookup routing, prompts, Ollama, export.
 
-Used by the FastAPI HTML UI (`app.py`) and the legacy Gradio UI (`chat_gradio.py`).
+Used by the FastAPI HTML UI (`app.py`).
 """
 
 from __future__ import annotations
@@ -86,10 +86,6 @@ DISCLAIMER_TEXT = (
 DISCLAIMER_SHORT = (
     "Draft / not assessor-validated. For learning and analyst assistance only. "
     "Not an official ATO/eMASS artifact."
-)
-
-EMPTY_RETRIEVAL_MD = (
-    "_No retrieval yet. Ask a question or name a control ID (for example `AC-2`)._"
 )
 
 WEAK_RETRIEVAL_NOTE = (
@@ -393,50 +389,6 @@ def build_explain_prompt(question, history_block, matches) -> str:
         f"{rules_block}"
         f"Question: {question}\n\nAnswer:"
     )
-
-
-def format_matches_markdown(matches: list) -> str:
-    if not matches:
-        return (
-            "**Retrieved controls**\n\n"
-            "_No NIST 800-53 controls met the ID match or similarity floor "
-            f"({retrieve.DEFAULT_MIN_SCORE})._"
-        )
-    lines = [
-        "**Retrieved controls**",
-        "",
-        "| ID | Score | Source | Title |",
-        "| --- | --- | --- | --- |",
-    ]
-    for m in matches:
-        cid = (m.get("id") or "").replace("|", "\\|")
-        title = (m.get("title") or "").replace("|", "\\|")
-        source = (m.get("source") or "").replace("|", "\\|")
-        score = f"{float(m.get('score') or 0):.2f}"
-        lines.append(f"| `{cid}` | {score} | {source} | {title} |")
-    lines.extend(["", "### Control quotes", ""])
-    for m in matches:
-        snippet = (m.get("snippet") or control_snippet(m.get("text") or "")).strip()
-        used = " · used in answer" if m.get("used_in_answer") else ""
-        lines.append(f"**`{m.get('id', '')}` — {m.get('title', '')}**{used}")
-        lines.append("")
-        lines.append(f"> {snippet or '_No statement text._'}")
-        lines.append("")
-    return "\n".join(lines)
-
-
-def matches_to_rows(matches: list) -> list[list]:
-    rows = []
-    for m in matches:
-        rows.append(
-            [
-                m.get("id", ""),
-                round(float(m.get("score") or 0), 4),
-                m.get("source", ""),
-                m.get("title", ""),
-            ]
-        )
-    return rows
 
 
 def control_snippet(text: str, limit: int = SNIPPET_CHARS) -> str:

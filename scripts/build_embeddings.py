@@ -15,7 +15,7 @@ EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
 def build_embeddings(in_path=IN_PATH, out_path=OUT_PATH, model_name=EMBED_MODEL_NAME):
     if not os.path.exists(in_path):
         raise FileNotFoundError(
-            f"{in_path} not found. Run extract_all_rules.py (or setup_data.py) first."
+            f"{in_path} not found. Run python setup_data.py first."
         )
 
     print(f"Loading {in_path}...")

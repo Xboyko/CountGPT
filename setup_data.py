@@ -116,25 +116,23 @@ def main() -> None:
         print("\nAll required data artifacts look ready.")
         print("Launch UI:  uvicorn app:app --reload --host 0.0.0.0 --port 7860")
         print("Or:         python app.py")
-        print("Legacy UI:  python chat_gradio.py")
-        print("Or CLI:     python ask_chatbot.py")
         return
 
     print("CountGPT data setup")
     print(f"Working directory: {os.getcwd()}")
 
     if args.force or not os.path.exists(NIST_DATA):
-        _run_module("test_download.py")
+        _run_module("scripts/download_catalog.py")
     else:
         print(f"\n=== Skipping download ({NIST_DATA} exists; use --force to refresh) ===")
 
     if args.force or not os.path.exists(CLEAN_RULES):
-        _run_module("extract_all_rules.py")
+        _run_module("scripts/extract_all_rules.py")
     else:
         print(f"\n=== Skipping extract ({CLEAN_RULES} exists; use --force to refresh) ===")
 
     if args.force or not os.path.exists(EMBEDDINGS_PKL):
-        _run_module("build_embeddings.py")
+        _run_module("scripts/build_embeddings.py")
     else:
         print(
             f"\n=== Skipping embeddings ({EMBEDDINGS_PKL} exists; use --force to refresh) ==="
@@ -151,8 +149,6 @@ def main() -> None:
     print("  1. ollama pull llama3.1:8b   # once, if you have not already")
     print("  2. uvicorn app:app --reload --host 0.0.0.0 --port 7860")
     print("     python app.py             # same HTML UI")
-    print("     python chat_gradio.py     # legacy Gradio UI")
-    print("     python ask_chatbot.py     # one-shot CLI")
 
 
 if __name__ == "__main__":

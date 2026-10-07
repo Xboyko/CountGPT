@@ -108,7 +108,7 @@ uvicorn app:app --reload --host 0.0.0.0 --port 7860
 
 Open [http://127.0.0.1:7860](http://127.0.0.1:7860), then try `/guide` and `/workbench`.
 
-Optional: `python chat_gradio.py` (legacy Gradio), `python ask_chatbot.py` (CLI).
+`python app.py` also starts the same web interface.
 
 ### WSL + Ollama on Windows
 
@@ -127,15 +127,13 @@ uvicorn app:app --reload --host 0.0.0.0 --port 7860
 
 ```bash
 bash -n start.sh
-python -m unittest test_launch.py
+python -m unittest discover -s tests
 python setup_data.py --check
 python retrieve.py
-python -m unittest test_countgpt.py test_app.py test_lora.py
 python evals/run_retrieval_eval.py --dry-run
 python evals/run_retrieval_eval.py --fixture
 python evals/run_retrieval_eval.py          # real pickle; skips if missing
 python scripts/validate_training_data.py    # SFT JSONL parse + category floors
-python -m unittest test_training_data.py
 ```
 
 The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back. Not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
@@ -152,7 +150,6 @@ Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.p
 pip install -r requirements-finetune.txt
 python scripts/validate_training_data.py   # confirm JSONL before spending GPU time
 python finetune.py                         # writes countgpt_model/ (gitignored)
-python test_finetuned.py
 ```
 
 Then restart the app. Chat drafting mode (POA&M, SSP/CIS, “write a…”) and Workbench `/api/poam` + `/api/ssp` generate with the LoRA model. The same NIST retrieve step still runs first; retrieved control text, placeholders such as `[System Name]`, and the draft-caveat instructions are injected into the LoRA prompt. Glossary / “what does AC-2 require?” questions keep using Ollama + RAG.
@@ -179,7 +176,19 @@ python scripts/build_training_data.py
 python scripts/validate_training_data.py
 ```
 
-**Stack:** Python 3.12, sentence-transformers, NumPy retrieval, Ollama, FastAPI + vanilla HTML/CSS/JS, optional Gradio, WSL2 on Windows.
+**Stack:** Python 3.12, sentence-transformers, NumPy retrieval, Ollama, FastAPI + vanilla HTML/CSS/JS, WSL2 on Windows.
+
+## Repository layout
+
+- `app.py`, `countgpt.py`, `retrieve.py`, `lora_infer.py`, `parse_findings.py` — web API, chat/draft logic, retrieval, optional adapter inference, and finding imports.
+- `static/` — Chat, Guide, and Workbench pages and their assets.
+- `setup_data.py` — data setup entry point; download, extraction, and embedding steps live in `scripts/`.
+- `finetune.py`, `training_data.jsonl`, `scripts/sft_*.py` — optional training and its example sources, builder, and validator.
+- `tests/`, `evals/` — automated checks and retrieval evaluation cases.
+- `start.sh`, `start.ps1`, `Dockerfile`, `docker-compose.yml`, `docker/` — local and container launch support.
+- `docs/demo/` — screenshots and walkthrough referenced above.
+
+The web app is the supported interface. The legacy Gradio UI, duplicate launchers, and one-off exploration scripts have been removed. Generated data, local adapters, and the virtual environment remain gitignored.
 
 ## Honest limitations
 

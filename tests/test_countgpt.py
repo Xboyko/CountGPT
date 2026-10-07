@@ -425,10 +425,10 @@ class RetrievalEvalSuiteTests(unittest.TestCase):
     def test_runner_dry_run_and_fixture_without_gpu(self):
         self.assertEqual(retrieval_eval_main(["--dry-run"]), 0)
         self.assertEqual(retrieval_eval_main(["--fixture"]), 0)
-        script = Path(__file__).resolve().parent / "evals" / "run_retrieval_eval.py"
+        script = Path(__file__).resolve().parents[1] / "evals" / "run_retrieval_eval.py"
         proc = subprocess.run(
             [sys.executable, str(script), "--dry-run"],
-            cwd=Path(__file__).resolve().parent,
+            cwd=Path(__file__).resolve().parents[1],
             capture_output=True,
             text=True,
             check=False,

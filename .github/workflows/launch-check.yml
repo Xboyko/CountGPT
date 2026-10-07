@@ -15,5 +15,5 @@ jobs:
           bash -n docker/entrypoint.sh
       - name: docker compose config
         run: docker compose -f docker-compose.yml config -q
-      - name: python unittest test_launch.py
-        run: python -m unittest test_launch.py
+      - name: Launch tests
+        run: python -m unittest tests.test_launch

@@ -17,7 +17,7 @@ from scripts.validate_training_data import (
 )
 
 
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[1]
 DATASET = REPO_ROOT / "training_data.jsonl"
 VALIDATOR = REPO_ROOT / "scripts" / "validate_training_data.py"
 
