@@ -2,13 +2,13 @@
 
 A **local learning tool** for the ISSO / compliance side of cybersecurity: NIST SP 800-53, RMF/ATO paperwork, POA&Ms, and SSP control implementation statements.
 
-I built this to *learn* the domain — not to ship an official authorization product. Outputs are drafts for study and practice. They are **not** assessor-validated and must never be treated as an ATO decision.
+I built this to *learn* the domain, not to ship an official product. Outputs are drafts for study and practice. They are not assessor-validated and must never be treated as an ATO decision.
 
 **How it was built:** I used AI to help implement the code. My job was the compliance design (what to retrieve, how POA&M/SSP drafts should look, what beginners need explained), debugging the pipeline, and checking answers against public RMF/FedRAMP/DoD-style guidance.
 
 ## Demo
 
-Screenshots and a short walkthrough of the local UI (Chat, Guide, Workbench). Recruiters: you do not need to install anything — these show what the app looks like on a running machine. For a live walkthrough I can screen-share.
+Screenshots and a short walkthrough of the local UI (Chat, Guide, Workbench). Recruiters: you do not need to install anything — these show what the app looks like on a running machine. For a live walkthrough, I can screen-share.
 
 ![Chat](docs/demo/01-chat.png)
 
