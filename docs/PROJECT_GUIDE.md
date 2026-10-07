@@ -122,7 +122,7 @@ A passing test suite is useful evidence that the application behaves as expected
 | `.dockerignore` | Keeps local environments, model outputs, tests, demo assets, and other unnecessary files out of the Docker build context. |
 | `.gitignore` | Keeps generated data, local model outputs, environment files, caches, and virtual environments out of Git. |
 | `.gitattributes` | Keeps shell scripts on Unix-style line endings so they work in Bash. |
-| `.github/workflows/launch-check.yml` | GitHub Actions workflow that checks shell syntax, Compose configuration, and launch tests on pushes and pull requests. It does not run the full application test suite. |
+| `.github/workflows/launch-check.yml` | GitHub Actions workflow that checks Windows PowerShell 5.1 parsing, Bash syntax, Compose configuration, and launch tests on pushes and pull requests. It does not run the full application test suite. |
 | `README.md` | The public introduction, features, and basic setup instructions. |
 | `docs/PROJECT_GUIDE.md` | This file-by-file explanation. |
 

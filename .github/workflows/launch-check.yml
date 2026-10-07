@@ -5,6 +5,22 @@ on:
   pull_request:
 
 jobs:
+  windows-launcher:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse launcher with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $parseTokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'start.ps1'), [ref]$parseTokens, [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Output $_.ToString() }
+            exit 1
+          }
   launch-files:
     runs-on: ubuntu-latest
     steps:

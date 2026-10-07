@@ -69,6 +69,11 @@ class LaunchFilesTests(unittest.TestCase):
         self.assertIn("http://127.0.0.1:11434", text)
         self.assertIn("uvicorn app:app", text)
 
+    def test_start_ps1_is_ascii_compatible(self):
+        # PowerShell 5.1 can decode BOM-less UTF-8 as the Windows code page.
+        # An em dash then contains a smart quote and breaks string parsing.
+        (ROOT / "start.ps1").read_bytes().decode("ascii")
+
     def test_compose_declares_ollama_and_countgpt(self):
         text = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
         self.assertIn("ollama:", text)
