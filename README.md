@@ -138,7 +138,7 @@ python scripts/validate_training_data.py    # SFT JSONL parse + category floors
 python -m unittest test_training_data.py
 ```
 
-The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back — not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
+The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back. Not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
 
 Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.pkl`) is gitignored and created by `setup_data.py`.
 
@@ -189,4 +189,4 @@ python scripts/validate_training_data.py
 
 ## Why I built this
 
-I wanted hands-on ISSO-style work — reading real 800-53 text, drafting POA&Ms and SSP statements — instead of only reading about RMF. A tool that must retrieve real control language forces you to notice when an answer is wrong.
+I wanted hands-on, ISSO-style work reading real 800-53 text and drafting POA&Ms and SSP statements instead of only reading about RMF. A tool that must retrieve real control language forces you to notice when an answer is wrong.
