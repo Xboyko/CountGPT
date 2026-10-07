@@ -1,201 +1,122 @@
-﻿# CountGPT
+# CountGPT
 
-A **local learning tool** for the ISSO / compliance side of cybersecurity: NIST SP 800-53, RMF/ATO paperwork, POA&Ms, and SSP control implementation statements.
+A local app for learning NIST controls and practicing cybersecurity compliance work.
 
-I built this to *learn* the domain, not to ship an official product. Outputs are drafts for study and practice. They are not assessor-validated and must never be treated as an ATO decision.
+I built CountGPT to get more hands-on practice with the ISSO side of cybersecurity: understanding controls, working through findings, and writing the documents that go with them. I wanted a place to ask questions and try things out while learning.
 
-**How it was built:** I used AI to help implement the code. My job was the compliance design (what to retrieve, how POA&M/SSP drafts should look, what beginners need explained), debugging the pipeline, and checking answers against public RMF/FedRAMP/DoD-style guidance.
+I used AI to help write the code. My focus has been on what the app should do, how the compliance workflows fit together, and testing the results.
 
-## Demo
+## What it does
 
-Screenshots and a short walkthrough of the local UI (Chat, Guide, Workbench). Recruiters: you do not need to install anything — these show what the app looks like on a running machine. For a live walkthrough, I can screen-share.
+CountGPT has three pages:
 
-![Chat](docs/demo/01-chat.png)
+- **Chat:** Ask questions about NIST SP 800-53 controls and compliance concepts. The app searches the NIST catalog and shows the controls it retrieved alongside the answer.
+- **Guide:** Read explanations of common terms, roles, and documents. A fictional system called MissionTracker walks through how they fit together.
+- **Workbench:** Practice writing a Plan of Action and Milestones (POA&M) entry or a System Security Plan (SSP) implementation statement. You can start with a practice scenario or paste/upload finding data.
 
-![Chat with Sources](docs/demo/02-chat-sources.png)
+Chat history stays in your browser. Answers and drafts can be exported as Markdown or CSV.
 
-![Guide](docs/demo/03-guide.png)
+This is a learning project. The generated text still needs review, and a draft from CountGPT is not an approved compliance document.
 
-![MissionTracker chapter](docs/demo/04-guide-missiontracker.png)
+## See it in action
 
-![Workbench](docs/demo/05-workbench.png)
+![CountGPT chat with retrieved sources](docs/demo/02-chat-sources.png)
 
-![Workbench practice scenario](docs/demo/06-workbench-scenario.png)
+[Walkthrough video](docs/demo/countgpt-demo.mp4) · [More screenshots](docs/demo/)
 
-![Chat answer with citations](docs/demo/07-chat-answer.png)
+## How it works
 
-**Walkthrough video:** [docs/demo/countgpt-demo.mp4](docs/demo/countgpt-demo.mp4) (slideshow of the pages above).
+When you ask a question, CountGPT searches a local copy of the NIST SP 800-53 Rev. 5 catalog. It checks for control IDs such as AC-2 and also searches by meaning.
 
+The matching text goes to Llama 3.1 8B, running through Ollama, along with your question. The model writes an answer, and the app shows the retrieved sources so you can check them. This approach is called retrieval-augmented generation, or RAG.
 
+There is also an optional fine-tuning workflow for drafting. It uses 300 instruction-and-response examples to train a LoRA adapter, a smaller set of learned changes applied to the base model. If a usable adapter and CUDA are available, drafts use that path. Otherwise, they use Ollama. Control lookups and explanations use Ollama.
 
-## One-command start
+The interface uses HTML, CSS, and JavaScript. The backend is Python with FastAPI.
 
-This is a **local** site. You do not need a public domain, reverse proxy, or hosting. After start, open [http://127.0.0.1:7860](http://127.0.0.1:7860) on the same machine.
+For a plain-English explanation of **every file**, see the [project guide](docs/PROJECT_GUIDE.md).
 
-**What is in this repo:** the FastAPI UI, NIST retrieval code, and (after first setup) MiniLM embeddings of the public 800-53 catalog.
+## Run it locally
 
-**What is not embedded:** Llama 3.1 8B weights (~4.9 GB). Those stay in [Ollama](https://ollama.com) as a service — either a host install that `./start.sh` talks to, or the `ollama` service in Compose. This is not a single fat binary.
+You need Python 3.10–3.12 and [Ollama](https://ollama.com). The first setup downloads the NIST catalog, an embedding model for search, and the Llama model. Allow time and several gigabytes of disk space for those downloads.
 
-### Option A — `./start.sh` (WSL / Linux / macOS)
+Clone the repo and enter its folder:
 
 ```bash
-./start.sh
+git clone https://github.com/Xboyko/CountGPT.git
+cd CountGPT
 ```
 
-Creates/activates `venv`, runs `setup_data.py` if `rules_with_embeddings.pkl` is missing, finds Ollama (including WSL → Windows via `/etc/resolv.conf`), pulls `llama3.1:8b` when the `ollama` CLI is available, then serves the UI.
+Start Ollama, then download the language model:
 
-Windows PowerShell (this project’s venv is usually WSL):
+```bash
+ollama pull llama3.1:8b
+```
+
+**Windows PowerShell:**
 
 ```powershell
 .\start.ps1
 ```
 
-`start.ps1` prefers `wsl -e bash start.sh`. Reload while editing: `START_RELOAD=1 ./start.sh`.
+The Windows launcher prefers WSL (Windows Subsystem for Linux), which is how I have been running the project. It also has a native Windows fallback. Avoid sharing the same virtual environment between Windows and WSL.
 
-### Option B — Docker Compose
+**WSL, Linux, or macOS:**
 
-Needs roughly **8–16 GB RAM** and **~10+ GB disk** (8B model + embeddings + image).
+```bash
+./start.sh
+```
+
+The launcher creates or reuses a Python environment, prepares missing search data, and starts the app.
+
+Open **[http://127.0.0.1:7860](http://127.0.0.1:7860)** in your browser. Stop the server with Ctrl+C.
+
+### Docker alternative
+
+With Docker and Docker Compose installed, run this from the repo folder:
 
 ```bash
 docker compose up --build
 ```
 
-First run waits for Ollama, builds the pickle if needed, and pulls `llama3.1:8b`. Manual equivalent:
+This starts the app and Ollama together. The first run prepares the data and downloads the Llama model. Open the same address above once startup finishes.
+
+## Check the setup
+
+Run these from the repo folder with the project's Python environment activated:
 
 ```bash
-docker compose exec ollama ollama pull llama3.1:8b
-```
-
-Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
-
-## What you get
-
-Three pages in one local app:
-
-| Page | URL | Purpose |
-| --- | --- | --- |
-| **Guide** | `/guide` | Plain-English chapters + searchable glossary (SSP vs POA&M, roles, ACAS vs STIG, …) |
-| **Chat** | `/` | Ask NIST / process questions; grounded answers cite retrieved controls. Chat history is saved in this browser only (`localStorage`) — not on the server. |
-| **Workbench** | `/workbench` | Structured POA&M and SSP drafts, field help, fictional practice scenarios |
-
-Learning loop: read the Guide → ask Chat → load a practice scenario in Workbench → compare to “what good looks like.”
-
-### What’s new / sophistication
-
-- **Redesigned UI + chat history on this device.** Slimmer Chat / Workbench / Guide shell, conversation-first Chat, and Sources in a drawer instead of a permanent side panel. Previous chats stay in the browser (`localStorage`) so you can reopen them after a reload. They are labeled **Saved on this device** and are not uploaded or stored on the server (the `/api/chat` call still sends only the usual short history window for the model).
-- **Citations you can check.** Chat and Workbench list the retrieved NIST controls with ID, title, score/source, and a short quote of the rule text. Inline chips such as `[AC-2]` jump to that card. If retrieval is empty or only weakly similar, the UI says so — no fake citations.
-- **MissionTracker walkthrough.** A fictional contractor DoD web app story in the Guide: roles, Monday ACAS High finding, what gets written, later SAR / AO / Continuous Monitoring, and a table of “real-life artifact → where it lives in CountGPT.”
-- **ACAS / CSV → POA&M rows.** On the Workbench POA&M form, paste scan lines or upload a simple CSV. The parser is a best-effort learning aid: it maps plugin, severity, host, and synopsis when they are present, never invents IDs or dates, and still waits for you to press Generate.
-- **Retrieval evals.** `evals/retrieval_cases.json` plus `python evals/run_retrieval_eval.py` score the index (hit-rate / precision-at-k), not the model’s prose.
-
-## Manual start (same pieces, by hand)
-
-**Requirements:** Python 3.10–3.12, [Ollama](https://ollama.com), disk for MiniLM + `llama3.1:8b`. Prefer `./start.sh` unless you want each step explicit.
-
-```bash
-cd CountGPT
-python -m venv venv
-# Windows:  venv\Scripts\activate
-# WSL/macOS/Linux:
-source venv/bin/activate
-
-pip install -r requirements.txt
-python setup_data.py          # download NIST catalog → extract → embed
-ollama pull llama3.1:8b
-
-uvicorn app:app --reload --host 0.0.0.0 --port 7860
-```
-
-Open [http://127.0.0.1:7860](http://127.0.0.1:7860), then try `/guide` and `/workbench`.
-
-`python app.py` also starts the same web interface.
-
-### WSL + Ollama on Windows
-
-`./start.sh` sets this automatically. If you start uvicorn yourself and the app runs in WSL with Ollama on Windows, point at the Windows host first:
-
-```bash
-export OLLAMA_HOST=http://$(grep -m1 nameserver /etc/resolv.conf | awk '{print $2}'):11434
-uvicorn app:app --reload --host 0.0.0.0 --port 7860
-```
-
-`GET /api/health` shows whether the NIST store loaded, whether Ollama is reachable, and whether a local LoRA adapter is available or already loaded.  
-`COUNTGPT_DRY_RUN=1` skips the model call (UI checks without Llama).  
-`COUNTGPT_FORCE_OLLAMA=1` keeps drafting on Ollama even if `countgpt_model/` is present.
-
-### Checks
-
-```bash
-bash -n start.sh
-python -m unittest discover -s tests
 python setup_data.py --check
-python retrieve.py
-python evals/run_retrieval_eval.py --dry-run
+python -m unittest discover -s tests
 python evals/run_retrieval_eval.py --fixture
-python evals/run_retrieval_eval.py          # real pickle; skips if missing
-python scripts/validate_training_data.py    # SFT JSONL parse + category floors
 ```
 
-The eval suite loads `evals/retrieval_cases.json` (≥20 queries with acceptable control IDs). It scores **retrieval only** — whether the right NIST IDs come back. Not the LLM write-up. If `rules_with_embeddings.pkl` is absent it prints a skip message and exits 0. A completed run fails (exit 1) when hit-rate falls below the `min_hit_rate` in that file (default **0.70**).
+To evaluate search against your actual local NIST index:
 
-Regenerable data (`nist_data.json`, `clean_rules.json`, `rules_with_embeddings.pkl`) is gitignored and created by `setup_data.py`.
+```bash
+python evals/run_retrieval_eval.py
+```
 
-## What's under the hood
+That evaluation checks whether search finds the expected controls. It does not grade the model's answers. It reports a skip if the index is missing.
 
-1. **RAG over NIST SP 800-53 Rev 5** — official OSCAL catalog → cleaned controls → MiniLM embeddings → hybrid exact-ID + semantic retrieve → Llama 3.1 8B via Ollama for lookup/explain, with draft disclaimers and source export. Drafting uses the same retrieve step, then the optional local LoRA adapter when `countgpt_model/` is present and CUDA is available.
-2. **Learning UI** — Guide glossary, teacher-style chat routing, Workbench tips (`static/field-help.json`), fictional scenarios (`static/scenarios.json`).
-3. **Optional QLoRA for drafting** — `training_data.jsonl` has **300** instruction/output pairs (POA&M, SSP statements, RMF Q&A, SOC triage, STIG vs scan). After `finetune.py` writes `countgpt_model/` (gitignored), **drafting** uses that local adapter when CUDA is available. **Lookup and explain** stay on Ollama `llama3.1:8b` + NIST retrieve. Needs an NVIDIA GPU + CUDA to train and to serve the adapter:
+If something is not working, open [the health endpoint](http://127.0.0.1:7860/api/health) to check the search data, Ollama connection, and adapter status. More setup options are in the [project guide](docs/PROJECT_GUIDE.md#running-the-pieces-yourself).
+
+## Optional: train the drafting adapter
+
+Training needs an NVIDIA GPU, CUDA, and the extra training dependencies. You can use the app without doing this.
 
 ```bash
 pip install -r requirements-finetune.txt
-python scripts/validate_training_data.py   # confirm JSONL before spending GPU time
-python finetune.py                         # writes countgpt_model/ (gitignored)
-```
-
-Then restart the app. Chat drafting mode (POA&M, SSP/CIS, “write a…”) and Workbench `/api/poam` + `/api/ssp` generate with the LoRA model. The same NIST retrieve step still runs first; retrieved control text, placeholders such as `[System Name]`, and the draft-caveat instructions are injected into the LoRA prompt. Glossary / “what does AC-2 require?” questions keep using Ollama + RAG.
-
-| Task | Backend |
-| --- | --- |
-| Lookup / explain (Chat) | Ollama `llama3.1:8b` + retrieve |
-| Drafting (Chat POA&M / SSP / CIS) | LoRA adapter if present + CUDA; else Ollama |
-| Workbench POA&M / SSP | LoRA adapter if present + CUDA; else Ollama |
-
-Environment:
-
-- `COUNTGPT_LORA_PATH` — adapter directory (default: `countgpt_model` next to the app).
-- `COUNTGPT_FORCE_OLLAMA=1` — disable LoRA and keep drafts on Ollama too.
-
-If the adapter is missing, CUDA is unavailable, Unsloth cannot load, or generate fails, CountGPT logs the reason and falls back to Ollama for drafts. `GET /api/health` reports `lora.available` and `lora.loaded`.
-
-`finetune.py` loads Llama 3.1 8B 4-bit, attaches LoRA (`r=16`), and runs 3 epochs at batch size 1 with gradient accumulation 4. A few hundred short examples is still a small job on a single modern GPU (often tens of minutes, not a multi-day run), but it will not start on CPU-only. Do not commit `countgpt_model/` or `training_output/`.
-
-To rebuild the JSONL from the example modules (after editing `scripts/sft_*.py`):
-
-```bash
-python scripts/build_training_data.py
 python scripts/validate_training_data.py
+python finetune.py
 ```
 
-**Stack:** Python 3.12, sentence-transformers, NumPy retrieval, Ollama, FastAPI + vanilla HTML/CSS/JS, WSL2 on Windows.
+Restart the app afterward to make the saved adapter available for drafting. If it cannot be used, drafting falls back to Ollama.
 
-## Repository layout
+The training examples are a small practice dataset. Fine-tuning is an experiment here; it does not establish that a draft is correct.
 
-- `app.py`, `countgpt.py`, `retrieve.py`, `lora_infer.py`, `parse_findings.py` — web API, chat/draft logic, retrieval, optional adapter inference, and finding imports.
-- `static/` — Chat, Guide, and Workbench pages and their assets.
-- `setup_data.py` — data setup entry point; download, extraction, and embedding steps live in `scripts/`.
-- `finetune.py`, `training_data.jsonl`, `scripts/sft_*.py` — optional training and its example sources, builder, and validator.
-- `tests/`, `evals/` — automated checks and retrieval evaluation cases.
-- `start.sh`, `start.ps1`, `Dockerfile`, `docker-compose.yml`, `docker/` — local and container launch support.
-- `docs/demo/` — screenshots and walkthrough referenced above.
+## Current limits
 
-The web app is the supported interface. The legacy Gradio UI, duplicate launchers, and one-off exploration scripts have been removed. Generated data, local adapters, and the virtual environment remain gitignored.
-
-## Honest limitations
-
-- Practice scenarios and drafts are for learning; not eMASS submissions.
-- The SFT file is now hundreds of public FedRAMP/DoD/NIST-style examples with placeholders — still small versus a production corpus. Drafting will use `countgpt_model/` when that folder exists and CUDA is available; lookup stays on base Llama + RAG.
-- No auth / multi-user hosting yet (static UI + `/api` can sit behind a reverse proxy later).
-
-## Why I built this
-
-I wanted hands-on, ISSO-style work reading real 800-53 text and drafting POA&Ms and SSP statements instead of only reading about RMF. A tool that must retrieve real control language forces you to notice when an answer is wrong.
+- Answers and drafts can be wrong. Retrieved sources make them easier to check.
+- Finding imports are best-effort parsing, not a full scanner integration.
+- The app has no login or multi-user access controls. It is intended for local use.
